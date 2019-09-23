@@ -30,7 +30,7 @@ class EKG:
     Parameters
     ----------
     df: pd.DataFrame
-        Dataframe containing 'EKG' column data
+        Dataframe containing 'EKG' column data. First two rows are headers [Channel, Datatype]
     
     Attributes
     ----------
