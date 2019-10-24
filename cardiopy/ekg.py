@@ -1020,7 +1020,7 @@ class EKG:
 
 
     ## plotting methods ##
-    def plotpeaks(self, rpeaks=True, ibi=True):
+def plotpeaks(self, rpeaks=True, ibi=True):
         """ plot EKG class instance """
         # set number of panels
         if ibi == True:
@@ -1033,18 +1033,29 @@ class EKG:
 
         fig, axs = plt.subplots(len(plots), 1, sharex=True, figsize = [9.5, 6])
         
-        for dat, ax, plot in zip(data, axs, plots):
-            if plot == 'ekg' and rpeaks == True:
-                ax.plot(dat)
-                ax.scatter(self.rpeaks.index, self.rpeaks.values, color='red')
-                ax.set_ylabel('EKG mV')
-            elif plot == 'ibi':
-                ax.plot(dat, color='grey', marker='.', markersize=8, markerfacecolor=(0, 0, 0, 0.8), markeredgecolor='None')
-                ax.set_ylabel('Inter-beat interval (ms)')
-                ax.set_xlabel('Time')
-            ax.margins(x=0)
-            # show microseconds for mouse-over
-            ax.format_xdata = lambda d: mdates.num2date(d).strftime('%H:%M:%S.%f')[:-3]
+        if len(plots) > 1:
+            for dat, ax, plot in zip(data, axs, plots):
+                if plot == 'ekg' and rpeaks == True:
+                    ax.plot(dat)
+                    ax.scatter(self.rpeaks.index, self.rpeaks.values, color='red')
+                    ax.set_ylabel('EKG mV')
+                elif plot == 'ibi':
+                    ax.plot(dat, color='grey', marker='.', markersize=8, markerfacecolor=(0, 0, 0, 0.8), markeredgecolor='None')
+                    ax.set_ylabel('Inter-beat interval (ms)')
+                    ax.set_xlabel('Time')
+                ax.margins(x=0)
+                # show microseconds for mouse-over
+                ax.format_xdata = lambda d: mdates.num2date(d).strftime('%H:%M:%S.%f')[:-3]
+        else:
+            for dat, plot in zip(data, plots):
+                if plot == 'ekg' and rpeaks == True:
+                    axs.plot(dat)
+                    axs.scatter(self.rpeaks.index, self.rpeaks.values, color='red')
+                    axs.set_ylabel('EKG mV')
+                    axs.set_xlabel('Time')
+                axs.margins(x=0)
+                # show microseconds for mouse-over
+                axs.format_xdata = lambda d: mdates.num2date(d).strftime('%H:%M:%S.%f')[:-3]
 
 
 
