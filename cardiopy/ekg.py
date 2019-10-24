@@ -7,6 +7,9 @@
     TO DO:
         1. Add option to extract sampling frequency & milliseconds from time column
         2. Re-add code to import previously cleaned nn data
+        3. Add range options for indices for rm peaks and rm ibis
+        4. Add more descriptive error message for ValueError encountered during
+        	add_peaks if range is outside of data
 
 """
 
@@ -647,7 +650,7 @@ class EKG:
             self.nn_diff = ii_diff
             self.nn_diffsq = ii_diffsq
 
-        # heartrate in bpm
+        # heartrate in bpm 
         hr_avg = 60/np.mean(ii)*1000
         
         rollmean_ii = pd.Series(ii).rolling(5).mean()
@@ -907,7 +910,8 @@ class EKG:
         """
         
         # this is from before division to two classes. 'data' and 'rpeaks' arrays shouldn't exist in IBI object.
-        arrays = ['data', 'rpeaks', 'rr', 'rr_diff', 'rr_diffsq', 'rpeak_artifacts', 'rpeaks_added', 'ibi_artifacts','rpeaks_df', 'nn', 'nn_diff', 'nn_diffsq', 'rr_arts', 'ii_interp', 'psd_mt', 'psd_fband_vals']
+        arrays = ['data', 'rpeaks', 'rr', 'rr_diff', 'rr_diffsq', 'rpeak_artifacts', 'rpeaks_added', 'ibi_artifacts',
+        'rpeaks_df', 'nn', 'nn_diff', 'nn_diffsq', 'rr_arts', 'ii_interp', 'psd_mt', 'psd_welch', 'psd_fband_vals']
         data = {k:v for k,v in vars(self).items() if k not in arrays}
         
         reform = {(level1_key, level2_key, level3_key): values
@@ -1000,7 +1004,16 @@ class EKG:
         except AttributeError: 
             pass
         else:
-            savepsd = saveinfo + '_psd.txt'
+            savepsd = saveinfo + '_psd_mt.txt'
+            psdfile = os.path.join(savedir, savepsd)
+            psd_mt_df = pd.DataFrame(self.psd_mt)
+            psd_mt_df.to_csv(psdfile, index=False)
+        try:
+            self.psd_welch
+        except AttributeError: 
+            pass
+        else:
+            savepsd = saveinfo + '_psd_welch.txt'
             psdfile = os.path.join(savedir, savepsd)
             psd_mt_df = pd.DataFrame(self.psd_mt)
             psd_mt_df.to_csv(psdfile, index=False)
@@ -1024,18 +1037,29 @@ class EKG:
             if plot == 'ekg' and rpeaks == True:
                 ax.plot(dat)
                 ax.scatter(self.rpeaks.index, self.rpeaks.values, color='red')
+                ax.set_ylabel('EKG mV')
             elif plot == 'ibi':
                 ax.plot(dat, color='grey', marker='.', markersize=8, markerfacecolor=(0, 0, 0, 0.8), markeredgecolor='None')
+                ax.set_ylabel('Inter-beat interval (ms)')
+                ax.set_xlabel('Time')
             ax.margins(x=0)
             # show microseconds for mouse-over
             ax.format_xdata = lambda d: mdates.num2date(d).strftime('%H:%M:%S.%f')[:-3]
 
 
-    def plotPS(self, method='mt', dB=False, bands=True):
+
+
+    def plotPS(self, method='mt', dB=False, bands=True, save=True, savedir=None):
         """ Plot power spectrum """
         
          # set title
-        title = self.metadata['file_info']['in_num'] + ' ' + self.metadata['file_info']['start_date'] + '\n' + self.metadata['file_info']['sleep_stage'] + ' ' + self.metadata['file_info']['cycle'] + ' ' + self.metadata['file_info']['epoch']
+        title = self.metadata['file_info']['in_num'] + ' ' + self.metadata['file_info']['start_date'] + '\n' + self.metadata['file_info']['sleep_stage'] + ' ' + self.metadata['file_info']['cycle']
+        try:
+            n.metadata['file_info']['epoch']
+        except:
+            pass
+        else:
+            title = title + ' ' +  n.metadata['file_info']['epoch']
 
         # set data to plot
         if method == 'mt':
@@ -1086,3 +1110,12 @@ class EKG:
         plt.xlabel('Frequency (Hz)')
         plt.ylabel(ylabel)
         plt.suptitle(title)
+
+        if save:
+            if savedir is None:
+                print('ERROR: File not saved. Please specify savedir argument.')
+            else:
+                savename = os.path.join(savedir, fname.split('.')[0]) + '_psd.png'
+                fig.savefig(savename, dpi=300)
+
+        return fig

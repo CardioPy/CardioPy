@@ -19,4 +19,15 @@ setuptools.setup(
 		"Operating System :: OS Indepedent",
 		],
 	python_requires = '>=3.6',
+	setup_requires=["numpy"],
+	install_requires = [
+		"datetime",
+		"matplotlib",
+		"os",
+		"pandas",
+		"scipy",
+		"shapely",
+		"statistics",
+		"mne"
+	]
 	)
