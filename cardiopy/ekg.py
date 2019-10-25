@@ -10,6 +10,7 @@
         3. Add range options for indices for rm peaks and rm ibis
         4. Add more descriptive error message for ValueError encountered during
         	add_peaks if range is outside of data
+        5. Add option for auto-determining threshold parameters (mw_size and upshift)
 
 """
 
@@ -39,7 +40,7 @@ class EKG:
     ----------
     """
 
-    def __init__(self, fname, fpath, min_dur=True, epoched=True, smooth=False, sm_wn=0.03, mw_size=0.2, upshift=1.03, rm_artifacts=False, detect_peaks=True):
+    def __init__(self, fname, fpath, min_dur=True, epoched=True, smooth=False, sm_wn=0.03, mw_size=0.1, upshift=1.035, rm_artifacts=False, detect_peaks=True):
         """ Initialize raw EKG object
 
         Parameters
