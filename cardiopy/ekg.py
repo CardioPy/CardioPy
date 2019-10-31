@@ -11,6 +11,8 @@
         4. Add more descriptive error message for ValueError encountered during
         	add_peaks if range is outside of data
         5. Add option for auto-determining threshold parameters (mw_size and upshift)
+        6. Add threshold statistics (sensitivity & PPV) to output
+        7. Update hrv_stats to assume NN
 
 """
 
@@ -658,11 +660,12 @@ class EKG:
         mx_ii, mn_ii = np.nanmax(rollmean_ii), np.nanmin(rollmean_ii)
         hr_max = 60/mn_ii*1000
         hr_min = 60/mx_ii*1000
+        hr_sd = np.std(rollmean_ii, ddof=1)
 
 
         # inter-beat interval & SD (ms)
         ibi = np.mean(ii)
-        sdrr = np.std(ii)
+        sdnn = np.std(ii, ddof=1)
 
         # SD & RMS of differences between successive II intervals (ms)
         sdsd = np.std(ii_diff)
@@ -672,8 +675,8 @@ class EKG:
         pxx20 = sum(np.abs(ii_diff) >= 20.0)/len(ii_diff)*100
         pxx50 = sum(np.abs(ii_diff) >= 50.0)/len(ii_diff)*100
 
-        self.time_stats = {'linear':{'HR_avg': hr_avg, 'HR_max': hr_max, 'HR_min': hr_min, 'IBI_mean': ibi,
-                                    'SDRR': sdrr, 'RMSSD': rmssd, 'pXX20': pxx20, 'pXX50': pxx50},
+        self.time_stats = {'linear':{'HR_avg': hr_avg, 'HR_sd': hr_sd, 'HR_max': hr_max, 'HR_min': hr_min, 'IBI_mean': ibi,
+                                    'SDNN': sdnn, 'RMSSD': rmssd, 'pXX20': pxx20, 'pXX50': pxx50},
                             }
         print('Time domain stats stored in obj.time_stats\n')
 
@@ -1039,7 +1042,7 @@ def plotpeaks(self, rpeaks=True, ibi=True):
                 if plot == 'ekg' and rpeaks == True:
                     ax.plot(dat)
                     ax.scatter(self.rpeaks.index, self.rpeaks.values, color='red')
-                    ax.set_ylabel('EKG mV')
+                    ax.set_ylabel('EKG (mV)')
                 elif plot == 'ibi':
                     ax.plot(dat, color='grey', marker='.', markersize=8, markerfacecolor=(0, 0, 0, 0.8), markeredgecolor='None')
                     ax.set_ylabel('Inter-beat interval (ms)')
@@ -1052,7 +1055,7 @@ def plotpeaks(self, rpeaks=True, ibi=True):
                 if plot == 'ekg' and rpeaks == True:
                     axs.plot(dat)
                     axs.scatter(self.rpeaks.index, self.rpeaks.values, color='red')
-                    axs.set_ylabel('EKG mV')
+                    axs.set_ylabel('EKG (mV)')
                     axs.set_xlabel('Time')
                 axs.margins(x=0)
                 # show microseconds for mouse-over
