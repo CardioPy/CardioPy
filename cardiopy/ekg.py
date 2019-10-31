@@ -671,8 +671,8 @@ class EKG:
         rmssd = np.sqrt(np.mean(ii_diffsq))
 
         # pNN20 & pNN50
-        pxx20 = sum(np.abs(ii_diff) >= 20.0)/len(ii_diff)*100
-        pxx50 = sum(np.abs(ii_diff) >= 50.0)/len(ii_diff)*100
+        pxx20 = sum(np.abs(ii_diff) >= 20.0)/(len(ii_diff)-1) *100
+        pxx50 = sum(np.abs(ii_diff) >= 50.0)/(len(ii_diff)-1) *100
 
         self.time_stats = {'linear':{'HR_avg': hr_avg, 'HR_max': hr_max, 'HR_min': hr_min, 'IBI_mean': ibi,
                                     'SDNN': sdnn, 'RMSSD': rmssd, 'pXX20': pxx20, 'pXX50': pxx50},
