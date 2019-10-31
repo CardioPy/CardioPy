@@ -660,7 +660,6 @@ class EKG:
         mx_ii, mn_ii = np.nanmax(rollmean_ii), np.nanmin(rollmean_ii)
         hr_max = 60/mn_ii*1000
         hr_min = 60/mx_ii*1000
-        hr_sd = np.std(rollmean_ii, ddof=1)
 
 
         # inter-beat interval & SD (ms)
@@ -675,7 +674,7 @@ class EKG:
         pxx20 = sum(np.abs(ii_diff) >= 20.0)/len(ii_diff)*100
         pxx50 = sum(np.abs(ii_diff) >= 50.0)/len(ii_diff)*100
 
-        self.time_stats = {'linear':{'HR_avg': hr_avg, 'HR_sd': hr_sd, 'HR_max': hr_max, 'HR_min': hr_min, 'IBI_mean': ibi,
+        self.time_stats = {'linear':{'HR_avg': hr_avg, 'HR_max': hr_max, 'HR_min': hr_min, 'IBI_mean': ibi,
                                     'SDNN': sdnn, 'RMSSD': rmssd, 'pXX20': pxx20, 'pXX50': pxx50},
                             }
         print('Time domain stats stored in obj.time_stats\n')
