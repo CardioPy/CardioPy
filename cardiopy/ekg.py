@@ -1,18 +1,23 @@
 """ This file contains the EKG class 
 
-    All R peak detections should be manually inspected with EKG.plot method and
+    All R peak detections should be manually inspected with EKG.plotpeaks method and
     false detections manually removed with rm_peaks method. After rpeak examination, 
     NaN data can be accounted for by removing false IBIs with rm_ibi method.
 
     TO DO:
+    	** Update docstrings **
         1. Add option to extract sampling frequency & milliseconds from time column
-        2. Re-add code to import previously cleaned nn data
+        2. Re-add code to import previously cleaned nn data -- DONE. 11-24-19 in hrv_stats method
         3. Add range options for indices for rm peaks and rm ibis
         4. Add more descriptive error message for ValueError encountered during
         	add_peaks if range is outside of data
         5. Add option for auto-determining threshold parameters (mw_size and upshift)
         6. Add threshold statistics (sensitivity & PPV) to output
         7. Update hrv_stats to assume NN
+        8. Add nn attribute for data that doesn't require cleanings
+        9. Fix spreadsheet alignment when smoothing used (incorp smooth & sm_wn metadata to all files)
+        10. Option for 1000Hz interpolation prior to peak detection; Option for 4Hz resampling of NN tachogram
+        	rather than original sampling frequencys
 
 """
 
@@ -42,7 +47,7 @@ class EKG:
     ----------
     """
 
-    def __init__(self, fname, fpath, min_dur=True, epoched=True, smooth=False, sm_wn=0.03, mw_size=0.1, upshift=1.035, rm_artifacts=False, detect_peaks=True):
+    def __init__(self, fname, fpath, min_dur=True, epoched=True, smooth=False, sm_wn=30, mw_size=100, upshift=3.5, rm_artifacts=False, detect_peaks=True):
         """ Initialize raw EKG object
 
         Parameters
@@ -58,11 +63,11 @@ class EKG:
         smooth: BOOL (default: False)
             Whether raw signal should be smoothed before peak detections. Set True if raw data has consistent high frequency noise
             preventing accurate peak detection
-        sm_wn: float (default: 0.03)
-            Size of moving window for rms smoothing preprocessing
-        mw_size: float (default: 0.2)
-            Moving window size for R peak detection (seconds)
-        upshift: float (default: 1.03)
+        sm_wn: float (default: 30)
+            Size of moving window for rms smoothing preprocessing (milliseconds)
+        mw_size: float (default: 100)
+            Moving window size for R peak detection (milliseconds)
+        upshift: float (default: 3.5)
             Detection threshold upshift for R peak detection (% of signal)
         rm_artifacts: bool (default: False)
             Apply IBI artifact removal algorithm
@@ -143,16 +148,16 @@ class EKG:
         self.metadata['analysis_info']['smooth'] = True
         self.metadata['analysis_info']['rms_smooth_wn'] = sm_wn
         
-        mw = int(sm_wn*self.metadata['analysis_info']['s_freq'])
+        mw = int((sm_wn/1000)*self.metadata['analysis_info']['s_freq'])
         self.data['raw_smooth'] = self.data.Raw.rolling(mw, center=True).mean()
 
 
     def set_Rthres(self, smooth, mw_size, upshift):
         """ set R peak detection threshold based on moving average + %signal upshift """
-        print('Calculating moving average with {} sec window and a {} upshift...'.format(mw_size, upshift))
+        print('Calculating moving average with {} ms window and a {}% upshift...'.format(mw_size, upshift))
         
         # convert moving window to sample & calc moving average over window
-        mw = int(mw_size*self.metadata['analysis_info']['s_freq'])
+        mw = int((mw_size/1000)*self.metadata['analysis_info']['s_freq'])
         if smooth == False:
             mavg = self.data.Raw.rolling(mw).mean()
             ekg_avg = np.mean(self.data['Raw'])
@@ -164,7 +169,8 @@ class EKG:
         mavg = mavg.fillna(ekg_avg)
 
         # set detection threshold as +5% of moving average
-        det_thres = mavg*upshift
+        upshift_mult = 1 + upshift/100
+        det_thres = mavg*upshift_mult
         self.data['EKG_thres'] = det_thres # can remove this for speed, just keep as series
 
         self.metadata['analysis_info']['mw_size'] = mw_size
@@ -798,7 +804,8 @@ class EKG:
                 fband_vals[key]['idx'] = None
                 fband_vals[key]['pwr'] = None
             else:
-                fband_vals[key]['idx'] = np.where((freq_bands[key][0] <= psd['freqs']) & (psd['freqs'] <= freq_bands[key][1]))[0]
+                # lower limit not inclusive
+                fband_vals[key]['idx'] = np.where((freq_bands[key][0] < psd['freqs']) & (psd['freqs'] <= freq_bands[key][1]))[0]
                 fband_vals[key]['pwr'] = psd['pwr'][fband_vals[key]['idx']]
                 
         self.psd_fband_vals = fband_vals
@@ -832,7 +839,7 @@ class EKG:
         self.freq_stats = freq_stats
 
 
-    def calc_fstats(self, itype, method, bandwidth, window='hamming', bands=None):
+    def calc_fstats(self, itype, method, bandwidth, window, bands=None):
         """ Calculate frequency domain statistics 
 
         Parameters
@@ -866,7 +873,7 @@ class EKG:
 
 
 
-    def hrv_stats(self, itype='nn', nn_file=None, method='mt', bandwidth=0.01):
+    def hrv_stats(self, itype='nn', nn_file=None, method='mt', bandwidth=0.01, window='hamming'):
         """ Calculate all statistics on IBI object 
 
             TO DO: Add freq_stats arguments to hrv_stats params? 
@@ -897,7 +904,7 @@ class EKG:
 
         # calculate statistics
         self.calc_tstats(itype)
-        self.calc_fstats(itype, method, bandwidth)
+        self.calc_fstats(itype, method, bandwidth, window)
         
         print('Done.')
 
@@ -1023,7 +1030,7 @@ class EKG:
 
 
     ## plotting methods ##
-def plotpeaks(self, rpeaks=True, ibi=True):
+	def plotpeaks(self, rpeaks=True, ibi=True):
         """ plot EKG class instance """
         # set number of panels
         if ibi == True:
