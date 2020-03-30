@@ -1068,7 +1068,10 @@ class EKG:
             if thres == True:
                 data = [self.data]
             if thres == False:
-                data = [self.data['Raw']]
+                if self.metadata['analysis_info']['smooth'] == False:
+                    data = [self.data['Raw']]
+                if self.metadata['analysis_info']['smooth'] == True:
+                    data = [self.data[['Raw', 'raw_smooth']]]
 
         fig, axs = plt.subplots(len(plots), 1, sharex=True, figsize = [9.5, 6])
         
