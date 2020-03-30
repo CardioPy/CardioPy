@@ -99,6 +99,8 @@ class EKG:
 
         if smooth == True:
             self.rms_smooth(sm_wn)
+        else:
+        	self.metadata['analysis_info']['smooth'] = False
 
         # detect R peaks
         if detect_peaks == True:
@@ -192,9 +194,16 @@ class EKG:
         
         thres = pd.Series(self.data['EKG_thres'])
         
+
         peaks = []
         x = 0
-        while x < len(raw):
+        if raw[len(raw)-1] > thres[len(raw)-1]:
+            for h in range(len(raw)-1, 0, -1):
+                if raw[len(raw)-(h+1)] < thres[len(raw)-(h+1)]:
+                    end = len(raw) - (h+1)
+        else:
+        	end = len(raw)
+        while x < end:
             if raw[x] > thres[x]:
                 roi_start = x
                 # count forwards to find down-crossing
@@ -202,6 +211,7 @@ class EKG:
                     if raw[h] < thres[h]:
                         roi_end = h
                         break
+    
                 # get maximum between roi_start and roi_end
                 peak = raw[x:h].idxmax()
                 peaks.append(peak)
@@ -210,11 +220,15 @@ class EKG:
             else:
                 x += 1
 
+
         self.rpeaks = raw[peaks]
         print('R peak detection complete')
 
         # get time between peaks and convert to mseconds
         self.rr = np.diff(self.rpeaks.index)/np.timedelta64(1, 'ms')
+
+        # create nn so that ibis can be removed
+        self.nn = self.rr
         
         # create rpeaks dataframe and add ibi columm
         rpeaks_df = pd.DataFrame(self.rpeaks)
@@ -374,10 +388,16 @@ class EKG:
             if x.hour == int(h) and x.minute == int(m) and x.second == int(s) and x.microsecond >= int(us_min) and x.microsecond <= int(us_max):
                 roi.append(x)
 
+        if self.metadata['analysis_info']['smooth'] == False:
         # define new rpeak
-        peak_idx = self.data.loc[roi]['Raw'].idxmax()
-        peak_val = self.data['Raw'].loc[peak_idx]
-        new_peak = pd.Series(peak_val, [peak_idx])
+            peak_idx = self.data.loc[roi]['Raw'].idxmax()
+            peak_val = self.data['Raw'].loc[peak_idx]
+            new_peak = pd.Series(peak_val, [peak_idx])
+
+        if self.metadata['analysis_info']['smooth'] == True:
+            peak_idx = self.data.loc[roi]['raw_smooth'].idxmax()
+            peak_val = self.data['raw_smooth'].loc[peak_idx]
+            new_peak = pd.Series(peak_val, [peak_idx])
 
         # add peak to rpeaks list
         self.rpeaks = self.rpeaks.append(new_peak)
@@ -1030,7 +1050,7 @@ class EKG:
 
 
     ## plotting methods ##
-	def plotpeaks(self, rpeaks=True, ibi=True):
+    def plotpeaks(self, rpeaks=True, ibi=True):
         """ plot EKG class instance """
         # set number of panels
         if ibi == True:
