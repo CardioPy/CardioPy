@@ -173,7 +173,7 @@ class EKG:
         # set detection threshold as +5% of moving average
         upshift_mult = 1 + upshift/100
         det_thres = mavg*upshift_mult
-        self.data['EKG_thres'] = det_thres # can remove this for speed, just keep as series
+        self.data.insert(1, 'EKG_thres', det_thres) # can remove this for speed, just keep as series
 
         self.metadata['analysis_info']['mw_size'] = mw_size
         self.metadata['analysis_info']['upshift'] = upshift
@@ -495,12 +495,13 @@ class EKG:
         
         # check for extra-long IBIs & option to auto-remove
         if any(self.rpeaks_df['ibi_ms'] > thres):
-            print(f'IBIs greater than {thres} milliseconds detected')
+            # get indices of ibis greater than threshold
+            rm_idx = [i for i, x in enumerate(self.nn) if x > thres]
+            print('{} IBIs greater than {} milliseconds detected'.format(len(rm_idx), thres))
             rm = input('Automatically remove? [y/n]: ')
             
             if rm.casefold() == 'y':
-                # get indices of ibis greater than threshold
-                rm_idx = [i for i, x in enumerate(self.nn) if x > thres]
+                
                 # replace ibis w/ NaN
                 self.nn[rm_idx] = np.NaN
                 print('{} IBIs removed.'.format(len(rm_idx), thres))
