@@ -57,7 +57,7 @@ class Auto_Param:
                 self.sm_precise_test(fname, fpath, mw_size_opt, sm_wn_opt, min_ibi, max_ibi, detect_peaks)
 
         if self.no_peaks == False:
-            self.output(fname, fpath, detect_peaks)
+            self.output(fname, fpath, smooth, detect_peaks)
 
     def broad_test(self, fname, fpath, mw_size_opt, upshift_opt, min_ibi, max_ibi, detect_peaks):
         self.param_condit= []
@@ -67,7 +67,7 @@ class Auto_Param:
                 if self.zero_val == True:
                     break
                 test_set = [up, mw]
-                e = EKG(fname, fpath, detect_peaks=True, upshift=test_set[0], mw_size=test_set[1], smooth = False)
+                e = EKG(fname, fpath, detect_peaks, upshift=test_set[0], mw_size=test_set[1], smooth = False)
                 prob_false = []
                 for x in e.rr:
                     if x < min_ibi:
@@ -101,7 +101,7 @@ class Auto_Param:
                 if p_zeroval == True:
                     break
                 test_set2 = [opt, mw]
-                f = EKG(fname, fpath, detect_peaks=True, upshift=test_set2[0], mw_size=test_set2[1])
+                f = EKG(fname, fpath, detect_peaks, upshift=test_set2[0], mw_size=test_set2[1])
                 prob_false2 = []
                 for x in f.rr:
                     if x < min_ibi:
@@ -119,11 +119,80 @@ class Auto_Param:
                 indx = self.param_condit.index(lst)
         self.optimal2 = self.param_condit[indx]
         print("The optimal upshift is " + str(self.optimal2[0]) + "." + " The optimal moving window size is " + str(self.optimal2[1]) + ". This gave an approximate false detection rate of " + str(self.optimal2[2]) + "%")
-    def output(self, fname, fpath, detect_peaks):
-        if self.zero_val == False:
-            e = EKG(fname, fpath, detect_peaks=True, upshift=self.optimal2[0], mw_size=self.optimal2[1])
-        if self.zero_val == True:
-            e = EKG(fname, fpath, detect_peaks=True, upshift=self.optimal[0], mw_size=self.optimal[1])
+    
+    def sm_broad_test(self, fname, fpath, mw_size_opt, upshift_opt, sm_wn_opt, min_ibi, max_ibi, detect_peaks):
+        self.param_condit= []
+        self.zero_val = False
+        for sm in sm_wn_opt:
+            for up in upshift_opt:
+                for mw in mw_size_opt:
+                    if self.zero_val == True:
+                        break
+                    test_set = [up, mw, sm]
+                    e = EKG(fname, fpath, detect_peaks, upshift=test_set[0], mw_size=test_set[1], smooth = True, sm_wn = sm)
+                    prob_false = []
+                    for x in e.rr:
+                        if x < min_ibi:
+                            prob_false.append(x)
+                        elif x > max_ibi:
+                            prob_false.append(x) 
+                    if len(e.rr) != 0:
+                        self.no_peaks = False
+                        approxparam = 100 * len(prob_false)/(len(e.rr))
+                        self.param_condit.append([up, mw, sm, approxparam])
+                        if approxparam == 0:
+                            self.zero_val = True
+        if len(self.param_condit) == 0:
+            print("No peaks detected, try different parameters")
+            self.no_peaks = True
+        else:
+            min_err = min(i[3] for i in self.param_condit)
+            for lst in self.param_condit:
+                if min_err in lst:
+                    indx = self.param_condit.index(lst)
+            optimal = self.param_condit[indx]
+            self.optimal = optimal
+            self.precisetest = [self.optimal[0]-.2, self.optimal[0]-.1, self.optimal[0]+.1, self.optimal[0]+.2]
+            if self.zero_val == True:
+                print("The optimal upshift is " + str(self.optimal[0]) + "." + " The optimal moving window size is " + str(self.optimal[1]) + ". The optimal smoothing window is "+ str(self.optimal[2]) + ". This gave an approximate false detection rate of " + str(self.optimal[3]) + "%")
+
+    def sm_precise_test(self, fname, fpath, mw_size_opt, sm_wn_opt, min_ibi, max_ibi, detect_peaks):
+        p_zeroval = False
+        for opt in self.precisetest:
+            for sm in sm_wn_opt:
+                for mw in mw_size_opt:
+                    if p_zeroval == True:
+                        break
+                    test_set2 = [opt, mw, sm]
+                    f = EKG(fname, fpath, detect_peaks, upshift=test_set2[0], mw_size=test_set2[1], smooth = True, sm_wn = sm)
+                    prob_false2 = []
+                    for x in f.rr:
+                        if x < min_ibi:
+                            prob_false2.append(x)
+                        elif x > max_ibi:
+                            prob_false2.append(x)
+                    if len(f.rr) != 0:
+                        approxparam2 = 100 * len(prob_false2)/(len(f.rr))
+                        self.param_condit.append([opt, mw, sm, approxparam2])
+                        if approxparam2 == 0:
+                                p_zeroval = True
+        min_err2 = min(i[3] for i in self.param_condit)
+        for lst in self.param_condit:
+            if min_err2 in lst:
+                indx = self.param_condit.index(lst)
+        self.optimal2 = self.param_condit[indx]
+        print("The optimal upshift is " + str(self.optimal2[0]) + "." + " The optimal moving window size is " + str(self.optimal2[1]) + ". The optimal smoothing window is "+ str(self.optimal2[2]) + ". This gave an approximate false detection rate of " + str(self.optimal2[3]) + "%")
+
+    def output(self, fname, fpath, smooth, detect_peaks):
+        if self.zero_val == False and smooth == False:
+            e = EKG(fname, fpath, detect_peaks, upshift=self.optimal2[0], mw_size=self.optimal2[1])
+        if self.zero_val == True and smooth == False:
+            e = EKG(fname, fpath, detect_peaks, upshift=self.optimal[0], mw_size=self.optimal[1])
+        if self.zero_val == False and smooth == True:
+            e = EKG(fname, fpath, detect_peaks, upshift=self.optimal2[0], mw_size=self.optimal2[1], smooth = True, sm_wn = self.optimal2[2])
+        if self.zero_val == True and smooth == True:
+            e = EKG(fname, fpath, detect_peaks, upshift=self.optimal[0], mw_size=self.optimal[1], smooth = True, sm_wn = self.optimal[2])
+
 class EKG:
     """ General class containing EKG analyses
     
@@ -240,7 +309,10 @@ class EKG:
         self.metadata['analysis_info']['rms_smooth_wn'] = sm_wn
         
         mw = int((sm_wn/1000)*self.metadata['analysis_info']['s_freq'])
-        self.data['raw_smooth'] = self.data.Raw.rolling(mw, center=True).mean()    
+        self.data['raw_smooth'] = self.data.Raw.rolling(mw, center=True).mean()   
+
+        print('Data smoothed with smoothing window of {} ms.'.format(sm_wn)) 
+
     def set_Rthres(self, smooth, mw_size, upshift):
         """ set R peak detection threshold based on moving average + %signal upshift """
         print('Calculating moving average with {} ms window and a {}% upshift...'.format(mw_size, upshift))
