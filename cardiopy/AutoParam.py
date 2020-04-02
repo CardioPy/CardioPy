@@ -55,8 +55,8 @@ class Auto_Param:
 
             if smooth == False:
                 self.broad_test(fname, fpath, mw_size_opt, upshift_opt, min_ibi, max_ibi, detect_peaks)
-                #if self.run_precise == True:
-                    #self.precise_test(fname, fpath, mw_size_opt, min_ibi, max_ibi, detect_peaks)
+                if self.run_precise == True:
+                    self.precise_test1(fname, fpath, mw_size_opt, min_ibi, max_ibi, detect_peaks)
             #if smooth == True:
                 #self.sm_broad_test(fname, fpath, mw_size_opt, upshift_opt, sm_wn_opt, min_ibi, max_ibi, detect_peaks)
                 #if self.run_precise == True:
@@ -165,7 +165,7 @@ class Auto_Param:
                 if min_err in lst:
                     indx = self.param_condit.index(lst)
             optimal = self.param_condit[indx]
-            print("The optimal upshift is " + str(optimal[0]) + "." + " The optimal moving window size is " + str(optimal[1]) + ". This gave an approximate false detection rate of " + str(optimal[2]) + "%")
+            print("The optimal upshift is " + str(optimal[0]) + "%." + " The optimal moving window size is " + str(optimal[1]) + " ms. This gave an approximate false detection rate of " + str(optimal[2]) + "%")
 
         if self.run_precise == True:
             min_err = min(i[2] for i in self.param_condit)
@@ -208,12 +208,13 @@ class Auto_Param:
             if low_up_test >= 0.5:
                 self.up_precisetest = [low_up_test, high_up_test]
             if low_up_test < 0.5: # less than this is unlikely to work 
-                is_low_up_bound = input('Current unprecise optimal upshift detection is {}. Calculated lower bound for further testing is {} . Given that this number is low, do you want to test more precisely around a lower bound? [y/n]'.format(self.optml_up1, low_up_test))
+                is_low_up_bound = input('Current unprecise optimal upshift detection is {}%. Calculated lower bound for further testing is {}% . Given that this number is low, do you want to test more precisely around a lower bound? [y/n]'.format(self.optml_up1, low_up_test))
                 print('\n')
                 if is_low_up_bound == 'y':
-                    low_up_bound = input('What lower bound do you want to test around? (Must be greater than 0 and less than the current optimal detection of {}.)'.format(self.optml_up1))
+                    low_up_bound = float(input('What lower bound do you want to test around? (Must be greater than 0 and less than the current optimal detection of {}.) [number]'.format(self.optml_up1)))
                     print('\n')
                     self.up_precisetest = [low_up_bound, high_up_test]
+                    self.manual_low_up1 = True
                 if is_low_up_bound == 'n':
                     self.up_precisetest = [high_up_test]
 
@@ -221,17 +222,19 @@ class Auto_Param:
             if low_mw_test > 0:
                 self.mw_precisetest = [low_mw_test, high_mw_test]
             if low_mw_test <= 0:
-                is_low_mw_bound = input('Current unprecise optimal moving window detection is {}. Calculated lower bound for further testing is {} . Given that this number is at or below zero, do you want to test more precisely around a lower bound? [y/n]'.format(self.optml_mw1, low_mw_test))
+                is_low_mw_bound = input('Current unprecise optimal moving window detection is {} ms. Calculated lower bound for further testing is {} ms . Given that this number is at or below zero, do you want to test more precisely around a lower bound? [y/n]'.format(self.optml_mw1, low_mw_test))
                 print('\n')
                 if is_low_mw_bound == 'y':
-                    low_mw_bound = input('What lower bound do you want to test around? (Must be greater than 0 and less than the current optimal detection of {}.)'.format(self.optml_mw1))
+                    low_mw_bound = float(input('What lower bound do you want to test around? (Must be greater than 0 and less than the current optimal detection of {} ms. Do not type ms)'.format(self.optml_mw1)))
                     print('\n')
-                    self.mw_precisetest = [low_mw_bound, high_up_test]
-                if is_low_bound == 'n':
+                    self.mw_precisetest = [low_mw_bound, high_mw_test]
+                    self.manual_low_mw1 = True
+                if is_low_mw_bound == 'n':
                     self.mw_precisetest = [high_mw_test]
           
     def precise_test1(self, fname, fpath, mw_size_opt, min_ibi, max_ibi, detect_peaks):
         test_count = 0
+        no_peak_count = 0 # counter so if = the number of tests then we know that no hb were ever detected
         self.run_precise2 = True
         for up in self.up_precisetest:
             for mw in self.mw_precisetest:
@@ -280,7 +283,7 @@ class Auto_Param:
                 if min_err in lst:
                     indx = self.param_condit.index(lst)
             optimal = self.param_condit[indx]
-            print("The optimal upshift is " + str(optimal[0]) + "." + " The optimal moving window size is " + str(optimal[1]) + ". This gave an approximate false detection rate of " + str(optimal[2]) + "%")
+            print("The optimal upshift is " + str(optimal[0]) + "%." + " The optimal moving window size is " + str(optimal[1]) + " ms. This gave an approximate false detection rate of " + str(optimal[2]) + "%")
 
         #prepare it for next precise test
         if self.run_precise2 == True:
@@ -288,7 +291,7 @@ class Auto_Param:
             min_err = min(i[2] for i in self.param_condit) #tests which precise is best
             for lst in self.param_condit:
                 if min_err in lst:
-                    indx = param_condit2.index(lst)
+                    indx = self.param_condit.index(lst)
             optimal = self.param_condit[indx]
 
     
@@ -296,23 +299,48 @@ class Auto_Param:
             self.optml_up2 = optimal[0]
             self.optml_mw2 = optimal[1]
 
-            #for upshift set where you will test more precisely
-            if len(self.metadata['upshift_opt']) != 1:
-                low_up_test = self.optml_up2 - (self.up_diff/4)
-                high_up_test = self.optml_up2 + (self.up_diff/4)
-            if len(self.metadata['upshift_opt']) == 1:
-                self.up_precisetest2 = [self.optml_up1]
-
         
             #for mw set where test more precisely
             if len(self.metadata['mw_size_opt']) != 1:
-                low_mw_test = self.optml_mw2 - (self.mw_diff/4)
-                high_mw_test = self.optml_mw2 + (self.mw_diff/4)
+                if self.manual_low_mw1 == True and self.optml_mw1 == self.mw_precisetest[0]: #if manually lower bound set test halfway between manual lower and otpimal for upper test 
+                    potential_low_mw = (self.mw_precisetest[0] - (self.optml_mw1 - self.mw_precisetest[0])/2)
+                    high_mw_test = self.mw_precisetest[0] + (self.optml_mw1 - self.mw_precisetest[0])/2
+                    if potential_low_mw > 0:
+                        low_mw_test = potential_low_mw
+                        self.mw_precisetest2 = [low_mw_test, high_mw_test]
+                    else:
+                        print("Lower bound of the moving window precise test calculated to be {} ms which is below zero and too low to continue. Will test more precisely with upper bound only.".format(potential_low_mw))
+                        self.mw_precisetest2 = [high_mw_test]
+                else:
+                    high_mw_test = self.optml_mw2 + (self.mw_diff/4)
+                    low_mw_test = self.optml_mw2 - (self.mw_diff/4)
+                    self.mw_precisetest2 = [low_mw_test, high_mw_test]
             if len(self.metadata['mw_size_opt']) == 1:
-                self.mw_precisetest2 = [self.optml_mw1]
-        ##STOPED HERE need to define self.whateverprecisetest2 for the ones where length is not one
+                self.mw_precisetest2 = [self.optml_mw2]
 
+            #for upshift set where test more precisely 
+            if len(self.metadata['upshift_opt']) != 1:
+                if self.manual_low_up1 == True and self.optml_up1 == self.up_precisetest[0]:
+                    potential_low_up = (self.up_precisetest[0] - (self.optml_up1 - self.up_precisetest[0])/2)
+                    high_up_test = self.up_precisetest[0] + (self.optml_up1 - self.up_precisetest[0])/2
+                    if potential_low_up > 0:
+                        low_up_test = potential_low_up
+                        self.up_precisetest2 = [low_up_test, high_up_test]
+                    else:
+                        print("Lower bound of the upshift precise test calculated to be {}% which is below zero and too low to continue. Will test more precisely with upper bound only.".format(potential_low_up))
+                        self.up_precisetest2 = [high_up_test]
 
+                # set if calculated lower test is lower than manual test that wasnt optimal dont run it just run up test
+                if self.manual_low_up1 == True and self.optml_up1 != self.up_precisetest[0]:
+                    low_up_test = self.optml_up2 - (self.up_diff/4)
+                    high_up_test = self.optml_up2 + (self.up_diff/4)
+                    if low_up_test < self.up_precisetest[0]:
+                        self.up_precisetest2 = [high_up_test]
+                else:
+                    self.up_precisetest2 = [high_up_test, low_up_test]
+            if len(self.metadata['upshift_opt']) == 1:
+                self.up_precisetest2 = [self.optml_up2] 
+   # Now need to work on precise_test2 and add in smoothing
     def precise_test2(self, fname, fpath, mw_size_opt, min_ibi, max_ibi, detect_peaks):
         no_peak_count = 0 # counter so if = the number of tests then we know that no hb were ever detected
         test_count = 0
@@ -353,7 +381,7 @@ class Auto_Param:
             self.optimal = optimal
             self.precisetest = [self.optimal[0]-.2, self.optimal[0]-.1, self.optimal[0]+.1, self.optimal[0]+.2]
             if self.zero_val == True:
-                print("The optimal upshift is " + str(self.optimal[0]) + "." + " The optimal moving window size is " + str(self.optimal[1]) + ". This gave an approximate false detection rate of " + str(self.optimal[2]) + "%")
+                print("The optimal upshift is " + str(self.optimal[0]) + "%." + " The optimal moving window size is " + str(self.optimal[1]) + " ms. This gave an approximate false detection rate of " + str(self.optimal[2]) + "%")
 
     def sm_broad_test(self, fname, fpath, mw_size_opt, upshift_opt, sm_wn_opt, min_ibi, max_ibi, detect_peaks):
         self.param_condit= []
@@ -389,7 +417,7 @@ class Auto_Param:
             self.optimal = optimal
             self.precisetest = [self.optimal[0]-.2, self.optimal[0]-.1, self.optimal[0]+.1, self.optimal[0]+.2]
             if self.zero_val == True:
-                print("The optimal upshift is " + str(self.optimal[0]) + "." + " The optimal moving window size is " + str(self.optimal[1]) + ". The optimal smoothing window is "+ str(self.optimal[2]) + ". This gave an approximate false detection rate of " + str(self.optimal[3]) + "%")
+                print("The optimal upshift is " + str(self.optimal[0]) + "." + " The optimal moving window size is " + str(self.optimal[1]) + ". The optimal smoothing window is "+ str(self.optimal[2]) + "ms. This gave an approximate false detection rate of " + str(self.optimal[3]) + "%")
 
     def sm_precise_test(self, fname, fpath, mw_size_opt, sm_wn_opt, min_ibi, max_ibi, detect_peaks):
         p_zeroval = False
