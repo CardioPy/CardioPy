@@ -122,17 +122,18 @@ class Auto_Param:
                                 'start_date': start_date,
                                 'sleep_stage': slpstage,
                                 'cycle': cycle
-                                }
+                                },
                         'testing_info':{'mw_size_opt':mw_size_opt, 
                                 'min_ibi':min_ibi, 
                                 'max_ibi':max_ibi,
                                 'sm_wn_opt': sm_wn_opt,
                                 'upshift_opt': upshift_opt,
-                                'smooth': smooth,
                                 'hb_range': hb_range
-                                }  
+                                },
+                        'analysis_info':{'smooth': smooth} 
                         }
 
+        
         if epoched == True:
             self.metadata['file_info']['epoch'] = epoch
 
@@ -144,14 +145,17 @@ class Auto_Param:
             if smooth == False:
                 self.broad_test(fname, fpath, mw_size_opt, upshift_opt, min_ibi, max_ibi, detect_peaks)
                 if self.run_precise == True:
-                    self.precise_test1(fname, fpath, mw_size_opt, min_ibi, max_ibi, detect_peaks)
+                    self.precise_test1(fname, fpath, min_ibi, max_ibi, detect_peaks)
+                    if self.precise_test2 == True:
+                        self.precise_test2(fname, fpath, mw_size_opt, min_ibi, max_ibi, detect_peaks)
             #if smooth == True: commented out because hasnt been decided what to do about smooth
                 #self.sm_broad_test(fname, fpath, mw_size_opt, upshift_opt, sm_wn_opt, min_ibi, max_ibi, detect_peaks)
                 #if self.run_precise == True:
                     #self.sm_precise_test(fname, fpath, mw_size_opt, sm_wn_opt, min_ibi, max_ibi, detect_peaks)
 
         #if self.zero_val == True or self.run_precise == True:
-            #self.output(fname, fpath, smooth, detect_peaks)
+            #self.output(fname, fpath, smooth, detect_peaks) 
+       
     def in_range(self, mw_size_opt, upshift_opt, sm_wn_opt):
         """ The function to determine if the inputs for mw_size_opt, upshift_opt and sm_wn_opt will cause errors in the code.
 
@@ -248,7 +252,7 @@ class Auto_Param:
         no_peak_count = 0 # counter of the number of times no peaks were detected
         test_count = 0 # counter of number of tests that were run
         for up in upshift_opt:
-            for mw in mw_size_opt:
+            for mw in mw_size_opt:   
                 test_count = test_count + 1 #increase counter
                 if self.zero_val == True:
                     break #if there has been a run with no false detections then break
@@ -306,26 +310,26 @@ class Auto_Param:
             self.optml_mw1 = optimal[1]
 
             #for upshift set where you will test more precisely
-            if len(self.metadata['upshift_opt']) == 3: # if 3 options were given
+            if len(self.metadata['testing_info']['upshift_opt']) == 3: # if 3 options were given
                 low_up_test = self.optml_up1 - (self.up_diff/2) # test precisely halfway above and below the upshift that gave the optimal detection (if 1,3,5 input and 5 deemed best will test 4 and 6)
                 high_up_test = self.optml_up1 + (self.up_diff/2) # up diff is from before the difference between the numbers given
-            if len(self.metadata['upshift_opt']) == 2:
+            if len(self.metadata['testing_info']['upshift_opt']) == 2:
                 self.up_diff = upshift_opt[1] - upshift_opt[0]
                 low_up_test = self.optml_up1 - (self.up_diff/2)
                 high_up_test = self.optml_up1 + (self.up_diff/2)
-            if len(self.metadata['upshift_opt']) == 1: # if only one was given that was the best one so use that
+            if len(self.metadata['testing_info']['upshift_opt']) == 1: # if only one was given that was the best one so use that
                 self.up_precisetest = [self.optml_up1]
 
 
             #for mw set where test more precisely
-            if len(self.metadata['mw_size_opt']) ==3:
+            if len(self.metadata['testing_info']['mw_size_opt']) ==3:
                 low_mw_test = self.optml_mw1 - (self.mw_diff/2)
                 high_mw_test = self.optml_mw1 + (self.mw_diff/2)
-            if len(self.metadata['mw_size_opt']) == 2:
+            if len(self.metadata['testing_info']['mw_size_opt']) == 2:
                 self.mw_diff = mw_size_opt[1] - mw_size_opt[0]
                 low_mw_test = self.optml_mw1 - (self.mw_diff/2)
                 high_mw_test = self.optml_mw1 + (self.mw_diff/2)
-            if len(self.metadata['mw_size_opt']) == 1:
+            if len(self.metadata['testing_info']['mw_size_opt']) == 1:
                 self.mw_precisetest = [self.optml_mw1]
 
             #for sm_wn set where test more precisely?
@@ -440,7 +444,7 @@ class Auto_Param:
 
         
             #for mw set where test more precisely
-            if len(self.metadata['mw_size_opt']) != 1: #if there was more than one number input
+            if len(self.metadata['testing_info']['mw_size_opt']) != 1: #if there was more than one number input
                 if self.manual_low_mw1 == True and self.optml_mw1 == self.mw_precisetest[0]: #if manually lower bound set, and the mw which gave best detection is that manually input lower bound 
                     potential_low_mw = (self.mw_precisetest[0] - (self.optml_mw1 - self.mw_precisetest[0])/2) #take halfway between the optimal mw determined in broad test (probably 1, the lowest input) and the manually determined low bound for precise test and then subtract that from the manual low bound to get this potential value
                     high_mw_test = self.mw_precisetest[0] + (self.optml_mw1 - self.mw_precisetest[0])/2 #higher test set as halfway between the manual low value deemed optimal and the previous value deemed optimal
@@ -454,11 +458,11 @@ class Auto_Param:
                     high_mw_test = self.optml_mw2 + (self.mw_diff/4) # further tests is the optimally determined one from this round plus or minuma quarter differnce (ex if 20, 75, 130 then 20 deemed best, then manual input and 47.5 tested, 47.5 deemed best so 33.75 and 61.75 tested)
                     low_mw_test = self.optml_mw2 - (self.mw_diff/4)
                     self.mw_precisetest2 = [low_mw_test, high_mw_test]
-            if len(self.metadata['mw_size_opt']) == 1: # if only one was inputed just use that one
+            if len(self.metadata['testing_info']['mw_size_opt']) == 1: # if only one was inputed just use that one
                 self.mw_precisetest2 = [self.optml_mw2]
 
             #for upshift set where test more precisely, same as above
-            if len(self.metadata['upshift_opt']) != 1:
+            if len(self.metadata['testing_info']['upshift_opt']) != 1:
                 if self.manual_low_up1 == True and self.optml_up1 == self.up_precisetest[0]:
                     potential_low_up = (self.up_precisetest[0] - (self.optml_up1 - self.up_precisetest[0])/2)
                     high_up_test = self.up_precisetest[0] + (self.optml_up1 - self.up_precisetest[0])/2
@@ -477,7 +481,7 @@ class Auto_Param:
                         self.up_precisetest2 = [high_up_test]
                 else:
                     self.up_precisetest2 = [high_up_test, low_up_test]
-            if len(self.metadata['upshift_opt']) == 1:
+            if len(self.metadata['testing_info']['upshift_opt']) == 1:
                 self.up_precisetest2 = [self.optml_up2] 
 
     def precise_test2(self, fname, fpath, mw_size_opt, min_ibi, max_ibi, detect_peaks):
