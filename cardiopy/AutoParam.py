@@ -142,11 +142,11 @@ class Auto_Param:
         if self.halt == False:
             self.num_beats(fname, fpath, hb_range, sampling_freq)
             self.broad_test(fname, fpath, min_ibi, max_ibi, detect_peaks)
-            if self.run_precise == True:
+    """     if self.run_precise == True:
                 self.precise_test1(fname, fpath, min_ibi, max_ibi, detect_peaks)
                 if self.run_precise2 == True:
                     self.precise_test2(fname, fpath, min_ibi, max_ibi, detect_peaks)
-            self.output(fname, fpath, detect_peaks)
+            self.output(fname, fpath, detect_peaks) """
         
     def prep(self, mw_size_opt, upshift_opt, sm_wn_opt):
         """ The function to set variables to test and determine if the inputs for mw_size_opt, upshift_opt and sm_wn_opt are appropriate.
@@ -490,24 +490,24 @@ class Auto_Param:
                 if min_err in lst: # if the minimum error is in the list within the lists of param condit
                     indx = self.param_condit.index(lst) # get the index number of that list
             self.optimal = self.param_condit[indx] # the list containing the parameters and the approximate false rate will be set as optimal
-            if self.metadata['analysis_info']['smooth'] == True and len(optimal) == 3: # if was testing smooth but now best is when not smoothed 
+            if self.metadata['analysis_info']['smooth'] == True and len(self.optimal) == 3: # if was testing smooth but now best is when not smoothed 
                 self.metadata['analysis_info']['smooth'] = False # no longer smooth
             if self.zero_val == True: # if there was a 0 percent false rate then print the parameters that lead to that
                 if self.metadata['analysis_info']['smooth']:
-                    print("The optimal upshift is " + str(optimal[0]) + "%." + " The optimal moving window size is " + str(optimal[1]) + " ms. This gave an approximate false detection rate of " + str(optimal[2]) + "%")
+                    print("The optimal upshift is " + str(self.optimal[0]) + "%." + " The optimal moving window size is " + str(self.optimal[1]) + " ms. This gave an approximate false detection rate of " + str(self.optimal[2]) + "%")
                 else:
-                    print("The optimal upshift is " + str(optimal[0]) + "%." + " The optimal moving window size is " + str(optimal[1]) + " ms. The optimal smoothing window is " + str(optimal[2]) + " ms. This gave an approximate false detection rate of " + str(optimal[-1]) + "%")
+                    print("The optimal upshift is " + str(self.optimal[0]) + "%." + " The optimal moving window size is " + str(self.optimal[1]) + " ms. The optimal smoothing window is " + str(self.optimal[2]) + " ms. This gave an approximate false detection rate of " + str(optimal[-1]) + "%")
             else:
                 # give each optimal paramater a variable for clarity and make it global bc will need in next precise test
-                self.optml_up2 = optimal[0]
-                self.optml_mw2 = optimal[1]
+                self.optml_up2 = self.optimal[0]
+                self.optml_mw2 = self.optimal[1]
                 if self.metadata['analysis_info']['smooth'] == True:
-                    self.optml_sm2 = optimal[2]
+                    self.optml_sm2 = self.optimal[2]
 
                 #show to user that optimal smoothing window is not the smallest valid smoothing window
                 if self.metadata['analysis_info']['smooth'] == True and len(self.metadata['testing_info']['sm_wn_opt']) != 1:
                     #find minimum of smoothing windows in the precise smooth test ran 
-                    min_sm = min(i[2] for i in self.sm_precisetest)
+                    min_sm = min(self.sm_precisetest)
                     if self.optml_sm2 != min_sm: # if the optimal isnt the minimum of smoothing windows in param condit. not min of all smoothing windows because some may have been tested and not added to param condit because ibis werent right.
                         print('The optimal smoothing window was determined to be {}, which is not the smallest option.'.format(self.optml_sm2))
                         print('The larger the smoothing window the less precise the r peak detections.')
