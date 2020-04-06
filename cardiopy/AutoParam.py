@@ -73,7 +73,7 @@ class Auto_Param:
         number of samples taken per second
     """
 
-    def __init__(self, fname, fpath, mw_size_opt = [20, 75, 130], upshift_opt = [1.0, 3.0, 5.0], sm_wn_opt = [10, 30, 50], hb_range = [40, 140], min_ibi = 500, max_ibi = 1400, smooth = False, min_dur=True, epoched=True, rm_artifacts=False, detect_peaks=True, sampling_freq=250):
+    def __init__(self, fname, fpath, mw_size_opt = [20, 130], upshift_opt = [1.0, 5.0], sm_wn_opt = [10, 50], hb_range = [40, 140], min_ibi = 500, max_ibi = 1400, smooth = False, min_dur=True, epoched=True, rm_artifacts=False, detect_peaks=True, sampling_freq=250):
 
         """ The constructor for Auto_Param class.
 
@@ -84,11 +84,11 @@ class Auto_Param:
         fpath : str
             path to file
         mw_size_opt : list of floats (default: [20, 130])
-            fill in when better idea of what you are doing
+            moving window sizes in ms around which and in between which will be tested
         upshift_opt : list of floats (default: [1.0, 5.0])
-            fill in when better idea of what you are doing
+            upshift sizes in percentages around which and in between which will be tested
         sm_wn_opt : list of floats ([10, 50])
-            fill in when better idea of what you are doing
+            smoothing window sizes in ms around which and in between which will be tested
         hb_range : list of floats ([40, 140])
             range of heart beats per minute that would be appropriate
         min_ibi : float (default: 500)
@@ -137,59 +137,41 @@ class Auto_Param:
         if epoched == True:
             self.metadata['file_info']['epoch'] = epoch
 
-        self.in_range(mw_size_opt, upshift_opt, sm_wn_opt)
+        self.prep(mw_size_opt, upshift_opt, sm_wn_opt)
 
         if self.halt == False:
             self.num_beats(fname, fpath, hb_range, sampling_freq)
-            self.broad_test(fname, fpath, mw_size_opt, upshift_opt, sm_wn_opt, min_ibi, max_ibi, detect_peaks)
+            self.broad_test(fname, fpath, min_ibi, max_ibi, detect_peaks)
             if self.run_precise == True:
                 self.precise_test1(fname, fpath, min_ibi, max_ibi, detect_peaks)
                 if self.run_precise2 == True:
                     self.precise_test2(fname, fpath, min_ibi, max_ibi, detect_peaks)
             self.output(fname, fpath, detect_peaks)
         
-    def in_range(self, mw_size_opt, upshift_opt, sm_wn_opt):
-        """ The function to determine if the inputs for mw_size_opt, upshift_opt and sm_wn_opt will cause errors in the code.
+    def prep(self, mw_size_opt, upshift_opt, sm_wn_opt):
+        """ The function to set variables to test and determine if the inputs for mw_size_opt, upshift_opt and sm_wn_opt are appropriate.
 
         Parameters:
-            mw_size_opt : list of floats (default: [20, 75, 130])
-                fill in when better idea of what you are doing
-            upshift_opt : list of floats (default: [1.0, 3.0, 5.0])
-                fill in when better idea of what you are doing
-            sm_wn_opt : list of floats ([10, 30, 50])
-                fill in when better idea of what you are doing
+            mw_size_opt : list of floats (default: [20, 130])
+                moving window sizes in ms around which and in between which will be tested
+            upshift_opt : list of floats (default: [1.0, 5.0])
+                upshift sizes in percentages around which and in between which will be tested
+            sm_wn_opt : list of floats ([10, 50])
+                smoothing window sizes in ms around which and in between which will be tested
         """
-
         self.halt = False # used in init command to cause the code to not run any more methods if set to true
-        if len(mw_size_opt) > 3 or len(upshift_opt) > 3 or len(sm_wn_opt) > 3: # if a list of greater than three numbers input into any of these parameters it will not run the code
-            print('Only up to three initial points can be tested. The range in between these points will be tested afterwards. Please set 3 or less initial points to be tested for each parameter.')
+        if len(mw_size_opt) > 2 or len(upshift_opt) > 2 or len(sm_wn_opt) > 2: # if a list of greater than two numbers input into any of these parameters it will not run the code
+            print('Please set 2 or less initial points to be tested for each parameter.')
             self.halt = True #make it stop so they can fix the input
-        if len(mw_size_opt)== 3: # if there are three but they are not equidistant will not run the code
-            mw_diff01 = mw_size_opt[1] - mw_size_opt[0]
-            mw_diff12 = mw_size_opt[2] - mw_size_opt[1]
-            if mw_diff12 != mw_diff01:
-                print('Difference between first and second moving window must be the same as the difference between the second and third. Re run with fixed parameters')
-                self.halt = True
-            else: 
-                self.mw_diff = mw_diff01 #set this value of differences between moving windows so can be used when precisely testing between points
-        if len(upshift_opt)== 3: # if there are three but they are not equidistant will not run the code
-            up_diff01 = upshift_opt[1] - upshift_opt[0]
-            up_diff12 = upshift_opt[2] - upshift_opt[1]
-            if up_diff12 != up_diff01:
-                print('Difference between first and second upshift must be the same as the difference between the second and third. Re run with fixed parameters')
-                self.halt = True
-            else:
-                self.up_diff = up_diff01 #set this value of differences between upshifts so can be used when precisely testing between points
 
-        if len(sm_wn_opt)== 3:
-            sm_diff01 = sm_wn_opt[1] - sm_wn_opt[0]
-            sm_diff12 = sm_wn_opt[2] - sm_wn_opt[1]
-            if sm_diff12 != sm_diff01:
-                print('Difference between first and second smoothing window must be the same as the difference between the second and third. Re run with fixed parameters')
-                self.halt = True 
-            else:
-                self.sm_diff = sm_diff01 # same for smoothing window
-        
+        #find the three points to test around and set the differences between pts to a variable
+        self.broad_up = np.linspace(start = upshift_opt[0], stop = upshift_opt[1], num = 3)
+        self.up_diff = self.broad_up[1] - self.broad_up[0]
+        self.broad_mw = np.linspace(start = mw_size_opt[0], stop = mw_size_opt[1], num = 3)
+        self.mw_diff = self.broad_mw[1] - self.broad_mw[0]
+        if self.metadata['analysis_info']['smooth'] == True:
+            self.broad_sm = np.linspace(start = sm_wn_opt[0], stop = sm_wn_opt[1], num = 3)
+            self.sm_diff = self.broad_sm[1] - self.broad_sm[0]
 
     def num_beats(self, fname, fpath, hb_range, sampling_freq):
         """ The function to determine if the appropriate number of detected peaks and IBIs in the segment.
@@ -219,7 +201,7 @@ class Auto_Param:
         self.ibi_range = [min_beats -1, max_beats -1] #set the plausible number of ibis range as a list
 
 
-    def broad_test(self, fname, fpath, mw_size_opt, upshift_opt, sm_wn_opt, min_ibi, max_ibi, detect_peaks):
+    def broad_test(self, fname, fpath, min_ibi, max_ibi, detect_peaks):
         """ The function to run an initial test of R peak detections using combinations of moving window and upshift parameters and determine where to test more precisely.
 
         Parameters:
@@ -243,10 +225,10 @@ class Auto_Param:
         self.run_precise = True # will run more precise testing unless set to false
         no_peak_count = 0 # counter of the number of times no peaks were detected
         test_count = 0 # counter of number of tests that were run
-        for up in upshift_opt:
-            for mw in mw_size_opt:
+        for up in self.broad_up:
+            for mw in self.broad_mw:
                 if self.metadata['analysis_info']['smooth'] == True: # if smoothing go this way 
-                    for sm in sm_wn_opt:
+                    for sm in self.broad_sm:
                         test_count = test_count + 1 #increase counter
                         if self.zero_val == True:
                             break #if there has been a run with no false detections then break
@@ -348,23 +330,16 @@ class Auto_Param:
                             self.optml_sm1 = min_sm
                             
                 #for upshift set where you will test more precisely
-                if len(self.metadata['testing_info']['upshift_opt']) == 3: # if 3 options were given
+                if len(self.metadata['testing_info']['upshift_opt']) == 2: # if 3 options were given
                     low_up_test = self.optml_up1 - (self.up_diff/2) # test precisely halfway above and below the upshift that gave the optimal detection (if 1,3,5 input and 5 deemed best will test 4 and 6)
                     high_up_test = self.optml_up1 + (self.up_diff/2) # up diff is from before the difference between the numbers given
-                if len(self.metadata['testing_info']['upshift_opt']) == 2:
-                    self.up_diff = upshift_opt[1] - upshift_opt[0]
-                    low_up_test = self.optml_up1 - (self.up_diff/2)
-                    high_up_test = self.optml_up1 + (self.up_diff/2)
+        
                 if len(self.metadata['testing_info']['upshift_opt']) == 1: # if only one was given that was the best one so use that
                     self.up_precisetest = [self.optml_up1]
 
 
                 #for mw set where test more precisely
-                if len(self.metadata['testing_info']['mw_size_opt']) ==3 :
-                    low_mw_test = self.optml_mw1 - (self.mw_diff/2)
-                    high_mw_test = self.optml_mw1 + (self.mw_diff/2)
-                if len(self.metadata['testing_info']['mw_size_opt']) == 2:
-                    self.mw_diff = mw_size_opt[1] - mw_size_opt[0]
+                if len(self.metadata['testing_info']['mw_size_opt']) == 2 :
                     low_mw_test = self.optml_mw1 - (self.mw_diff/2)
                     high_mw_test = self.optml_mw1 + (self.mw_diff/2)
                 if len(self.metadata['testing_info']['mw_size_opt']) == 1:
@@ -372,13 +347,10 @@ class Auto_Param:
 
                 #for sm_wn set where test more precisely
                 if self.metadata['analysis_info']['smooth'] == True:
-                    if len(self.metadata['testing_info']['sm_wn_opt']) ==3:
-                        low_sm_test = self.optml_sm1 - (self.sm_diff/2)
-                        high_sm_test = self.optml_sm1 + (self.sm_diff/2)
                     if len(self.metadata['testing_info']['sm_wn_opt']) == 2:
-                        self.sm_diff = sm_wn_opt[1] - sm_wn_opt[0]
                         low_sm_test = self.optml_sm1 - (self.sm_diff/2)
                         high_sm_test = self.optml_sm1 + (self.sm_diff/2)
+    
                     if len(self.metadata['testing_info']['sm_wn_opt']) == 1:
                         self.sm_precisetest = [self.optml_sm1]
 
