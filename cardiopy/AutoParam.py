@@ -142,11 +142,11 @@ class Auto_Param:
         if self.halt == False:
             self.num_beats(fname, fpath, hb_range, sampling_freq)
             self.broad_test(fname, fpath, mw_size_opt, upshift_opt, sm_wn_opt, min_ibi, max_ibi, detect_peaks)
-        """ if self.run_precise == True:
+            if self.run_precise == True:
                 self.precise_test1(fname, fpath, min_ibi, max_ibi, detect_peaks)
                 if self.run_precise2 == True:
                     self.precise_test2(fname, fpath, min_ibi, max_ibi, detect_peaks)
-            self.output(fname, fpath, detect_peaks)"""
+            self.output(fname, fpath, detect_peaks)
         
     def in_range(self, mw_size_opt, upshift_opt, sm_wn_opt):
         """ The function to determine if the inputs for mw_size_opt, upshift_opt and sm_wn_opt will cause errors in the code.
