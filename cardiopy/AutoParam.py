@@ -345,7 +345,7 @@ class Auto_Param:
                         if lrg_sm == 'y':
                             self.optml_sm1 = self.optml_sm1
                         if lrg_sm == 'n':
-                            self.optml_sm1 = min(sm_wn_opt)
+                            self.optml_sm1 = min_sm
                             
                 #for upshift set where you will test more precisely
                 if len(self.metadata['testing_info']['upshift_opt']) == 3: # if 3 options were given
@@ -531,6 +531,26 @@ class Auto_Param:
                 self.optml_mw2 = optimal[1]
                 if self.metadata['analysis_info']['smooth'] == True:
                     self.optml_sm2 = optimal[2]
+
+                #show to user that optimal smoothing window is not the smallest valid smoothing window
+                if self.metadata['analysis_info']['smooth'] == True and len(self.metadata['testing_info']['sm_wn_opt']) != 1:
+                    #find minimum of smoothing windows in the precise smooth test ran 
+                    min_sm = min(i[2] for i in self.sm_precisetest)
+                    if self.optml_sm2 != min_sm: # if the optimal isnt the minimum of smoothing windows in param condit. not min of all smoothing windows because some may have been tested and not added to param condit because ibis werent right.
+                        print('The optimal smoothing window was determined to be {}, which is not the smallest option.'.format(self.optml_sm2))
+                        print('The larger the smoothing window the less precise the r peak detections.')
+                        #find percentage false peaks with smallest smoothing window
+                        small_sm = [] #make param condit list of just the smallest smoothing window
+                        for ls in self.param_condit:
+                            if ls[2] == min_sm:
+                                small_sm.append(ls)
+                        min_lo_sm_err = min(i[-1] for i in small_sm) #minmum error for smallest smoothing window
+                        print('The percentage of false peaks with the smallest valid smoothing window of {} is {}% Compared to {} with the optimal smoothing widow of {}'.format(min_sm, min_lo_sm_err, self.optimal[-1], self.optml_sm2))
+                        lrg_sm = input('Do you want to use the keep going with the larger smoothing window? [y/n]')
+                        if lrg_sm == 'y':
+                            self.optml_sm2 = self.optml_sm2
+                        if lrg_sm == 'n':
+                            self.optml_sm2 = min_sm    
 
                 #for mw set where test more precisely
                 if len(self.metadata['testing_info']['mw_size_opt']) != 1: #if there was more than one number input
