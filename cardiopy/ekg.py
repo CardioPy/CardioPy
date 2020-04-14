@@ -196,7 +196,13 @@ class EKG:
         
         peaks = []
         x = 0
-        while x < len(raw):
+        if raw[len(raw)-1] > thres[len(raw)-1]:
+            for h in range(len(raw)-1, 0, -1):
+                if raw[len(raw)-(h+1)] < thres[len(raw)-(h+1)]:
+                    end = len(raw) - (h+1)
+        else:
+           end = len(raw)
+        while x < end:
             if raw[x] > thres[x]:
                 roi_start = x
                 # count forwards to find down-crossing
