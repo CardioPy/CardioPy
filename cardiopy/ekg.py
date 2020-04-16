@@ -120,20 +120,18 @@ class EKG:
             final_round = True
             self.output() #which will run it as if final round
         else:
-            final_round = False #not the final round dont add to metadata etc as you go
             if detect_peaks == True:
                 broad_up, up_diff, broad_mw, mw_diff, broad_sm, sm_diff = self.prep(mw_size_opt, upshift_opt, sm_wn_opt)
-                if self.halt == False:
-                    ibi_range = self.num_beats(hb_range)
-                    self.broad_test(fname, fpath, min_ibi, max_ibi, detect_peaks, ibi_range, broad_up, rm_artifacts, smooth, broad_mw, up_diff, mw_diff, broad_sm, sm_diff,  final_round, zero_val = False, no_peak_count = 0)
-        """         if self.run_precise == True:
-                        self.precise_test1(fname, fpath, min_ibi, max_ibi, detect_peaks)
-                        if self.run_precise2 == True:
-                            self.precise_test2(fname, fpath, min_ibi, max_ibi, detect_peaks)
-                    self.output(fname, fpath, detect_peaks)
+                ibi_range = self.num_beats(hb_range)
+                manual_low_up1, manual_low_mw1, manual_low_sm1, up_precisetest, mw_precisetest, sm_precisetest, no_low_smooth, final_round, end = self.broad_test(fname, fpath, min_ibi, max_ibi, detect_peaks, ibi_range, broad_up, rm_artifacts, smooth, broad_mw, up_diff, mw_diff, broad_sm, sm_diff,  final_round = False, zero_val = False, no_peak_count = 0)
+    """         if self.run_precise == True:
+                    self.precise_test1(fname, fpath, min_ibi, max_ibi, detect_peaks)
+                    if self.run_precise2 == True:
+                        self.precise_test2(fname, fpath, min_ibi, max_ibi, detect_peaks)
+                self.output(fname, fpath, detect_peaks)
 
-        register_matplotlib_converters()"""
-        
+    register_matplotlib_converters()"""
+    
     
     def load_ekg(self, min_dur, smooth):
         """ 
@@ -180,12 +178,26 @@ class EKG:
             sm_wn : list of floats ([10, 50])
                 smoothing window sizes in ms around which and in between which will be tested
         """
-        self.halt = False # used in init command to cause the code to not run any more methods if set to true
         if len(mw_size_opt) > 2 or len(upshift_opt) > 2 or len(sm_wn_opt) > 2: # if a list of greater than two numbers input into any of these parameters it will not run the code
-            print('Please set 2 or less initial points to be tested for each parameter.')
-            ### raise an exception here instead (https://www.pythonforbeginners.com/error-handling/exception-handling-in-python)
-        ### OR ask the user to input new parameters w/ the input() function
-            self.halt = True #make it stop so they can fix the input
+            print('Please set two or less initial points to be tested for each parameter.')
+            if len(mw_size_opt) > 2:
+                mw_input = input("Input one or two initial moving window sizes to be tested seperated by a comma]:").split(',')
+                mw_size_opt = []
+                for mw in mw_input:
+                    mw_size_opt.append(float(mw))
+                self.metadata['testing_info']['mw_size'] = mw_size_opt
+            if len(upshift_opt) > 2:
+                upshift_input = input("Input one or two initial upshifts to be tested [list of one or two int or floats]:").split(',')
+                upshift_opt = []
+                for up in upshift_input:
+                    upshift_opt.append(float(up))
+                self.metadata['testing_info']['upshift'] = upshift_opt
+            if len(sm_wn_opt) > 2:
+                sm_wn_input = input("Input one or two initial smoothing window sizes to be tested [list of one or two int or floats]:").split(',')
+                sm_wn_opt = []
+                for sm in sm_wn_input:
+                    mw_size_opt.append(float(mw))
+                self.metadata['testing_info']['sm_wn'] = sm_wn_opt
 
         #find the three points to test around and set the differences between pts to a variable
         if len(upshift_opt) > 1:
@@ -253,8 +265,7 @@ class EKG:
                 whether peaks should be detected
         """
         self.param_condit= [] # this list will contain lists of the parameters tested and the approximate false detection rate for each
-        
-        self.run_precise = True # will run more precise testing unless set to false
+        end = False # a way to stop the program
         test_count = 0 # counter of number of tests that were run
         brk = False # dont break
         for up in broad_up:
@@ -266,7 +277,7 @@ class EKG:
                         test_count = test_count + 1 #increase counter
                         self.rms_smooth(sm_wn = sm)
                         self.calc_RR(smooth, mw, up, rm_artifacts, final_round)
-                        zero_val, no_peak_count = self.paramcondit(min_ibi, max_ibi, ibi_range, up, mw, sm, no_peak_count)
+                        zero_val, no_peak_count, final_round = self.paramcondit(min_ibi, max_ibi, ibi_range, up, mw, sm, no_peak_count, final_round)
                         if zero_val == True:
                             brk = True
                 else:
@@ -274,7 +285,7 @@ class EKG:
                         break
                     test_count = test_count + 1 #increase counter
                     self.calc_RR(smooth, mw, up, rm_artifacts, final_round)
-                    zero_val, no_peak_count = self.paramcondit(min_ibi, max_ibi, ibi_range, up, mw, no_peak_count)
+                    zero_val, no_peak_count, final_round = self.paramcondit(min_ibi, max_ibi, ibi_range, up, mw, no_peak_count, final_round)
                     if zero_val == True:
                         brk = True
         
@@ -290,14 +301,22 @@ class EKG:
             if run_precise != 'y' or 'n':
                 print('please enter y or n')
                 run_precise = input('Do you still want to run the more precise test? [y/n]')
-                print('\n')
-            #maybe raise an error here   
+                print('\n')   
             if run_precise == 'y':
-                self.run_precise = True
+                final_round = False
             if run_precise == 'n':
-                self.run_precise = False
+                end = True
+        if end == True or zero_val == True: #set these variables that are expected to be returned to none so that they can be returned
+                manual_low_up1 = None
+                manual_low_mw1 = None
+                manual_low_sm1 = None
 
-        if zero_val == True or self.run_precise == True: #if there was a zero value for approx param or if we will run precise
+                up_precisetest = None
+                mw_precisetest = None
+                sm_precisetest = None
+                no_low_smooth = None
+
+        if end == False:
             min_err = min(i[-1] for i in self.param_condit) #get the minimum "approxparam"
             for lst in self.param_condit:
                 if min_err in lst: # if the minimum error is in the list within the lists of param condit
@@ -322,7 +341,7 @@ class EKG:
                 manual_low_mw1 = False
                 manual_low_sm1 = False
 
-                if smooth == True and len(self.metadata['testing_info']['sm_wn_opt']) != 1:
+                if smooth == True and len(self.metadata['testing_info']['sm_wn']) != 1:
                     #find minimum of smoothing windows in param condit
                     min_sm = min(i[2] for i in self.param_condit)
                     if optml_sm1 != min_sm: # if the optimal isnt the minimum of smoothing windows in param condit. not min of all smoothing windows because some may have been tested and not added to param condit because ibis werent right.
@@ -342,53 +361,53 @@ class EKG:
                             optml_sm1 = min_sm
                             
                 #for upshift set where you will test more precisely
-                if len(self.metadata['testing_info']['upshift_opt']) == 2: # if multiple options were given
+                if len(self.metadata['testing_info']['upshift']) == 2: # if multiple options were given
                     low_up_test = optml_up1 - (up_diff/2) # test precisely halfway above and below the upshift that gave the optimal detection (if 1,3,5 input and 5 deemed best will test 4 and 6)
                     high_up_test = optml_up1 + (up_diff/2) # up diff is from before the difference between the numbers given
         
-                if len(self.metadata['testing_info']['upshift_opt']) == 1: # if only one was given that was the best one so use that
+                if len(self.metadata['testing_info']['upshift']) == 1: # if only one was given that was the best one so use that
                     up_precisetest = [optml_up1]
 
                 #for mw set where test more precisely
-                if len(self.metadata['testing_info']['mw_size_opt']) == 2 :
+                if len(self.metadata['testing_info']['mw_size']) == 2 :
                     low_mw_test = optml_mw1 - (mw_diff/2)
                     high_mw_test = optml_mw1 + (mw_diff/2)
-                if len(self.metadata['testing_info']['mw_size_opt']) == 1:
+                if len(self.metadata['testing_info']['mw_size']) == 1:
                     mw_precisetest = [optml_mw1]
 
                 #for sm_wn set where test more precisely
                 if self.metadata['analysis_info']['smooth'] == True:
-                    if len(self.metadata['testing_info']['sm_wn_opt']) == 2:
+                    if len(self.metadata['testing_info']['sm_wn']) == 2:
                         low_sm_test = optml_sm1 - (sm_diff/2)
                         high_sm_test = optml_sm1 + (sm_diff/2)
-    
-                    if len(self.metadata['testing_info']['sm_wn_opt']) == 1:
+
+                    if len(self.metadata['testing_info']['sm_wn']) == 1:
                         sm_precisetest = [optml_sm1]
 
-                if len(self.metadata['testing_info']['upshift_opt']) != 1: #do not need to do all this if its 1
+                if len(self.metadata['testing_info']['upshift']) != 1: #do not need to do all this if its 1
                     #set precise test and deal with what if upshift very low
                     if low_up_test >= 0.5:
                         up_precisetest = [low_up_test, high_up_test]
                     if low_up_test < 0.5: # less than this is unlikely to work 
-                        is_low_up_bound = input('Current unprecise optimal upshift detection is {}%. Calculated lower value for further testing is {}% . Do you want to test more precisely around a value lower than the current optimal detection? [y/n]'.format(self.optml_up1, low_up_test))
+                        is_low_up_bound = input('Current unprecise optimal upshift detection is {}%. Calculated lower value for further testing is {}% . Do you want to test more precisely around a value lower than the current optimal detection? [y/n]'.format(optml_up1, low_up_test))
                         print('\n')
                         if is_low_up_bound == 'y': #give option to set lower bound 
-                            low_up_bound = float(input('What lower value do you want to test around? (Must be greater than 0 and less than the current optimal detection of {}.) [number]'.format(self.optml_up1)))
+                            low_up_bound = float(input('What lower value do you want to test around? (Must be greater than 0 and less than the current optimal detection of {}.) [number]'.format(optml_up1)))
                             print('\n')
                             up_precisetest = [low_up_bound, high_up_test] #use this lower bound
                             manual_low_up1 = True
                         if is_low_up_bound == 'n':
                             up_precisetest = [high_up_test] # just use the upper test 
 
-                if len(self.metadata['testing_info']['mw_size_opt']) != 1:
+                if len(self.metadata['testing_info']['mw_size']) != 1:
                     #set global variable for mw, deal with mw below 0
                     if low_mw_test > 0:
                         mw_precisetest = [low_mw_test, high_mw_test]
                     if low_mw_test <= 0:
-                        is_low_mw_bound = input('Current unprecise optimal moving window detection is {} ms. Calculated lower value for further testing is {} ms . Do you want to test more precisely around a value lower than the current optimal detection? [y/n]'.format(self.optml_mw1, low_mw_test))
+                        is_low_mw_bound = input('Current unprecise optimal moving window detection is {} ms. Calculated lower value for further testing is {} ms . Do you want to test more precisely around a value lower than the current optimal detection? [y/n]'.format(optml_mw1, low_mw_test))
                         print('\n')
                         if is_low_mw_bound == 'y':
-                            low_mw_bound = float(input('What lower value do you want to test around? (Must be greater than 0 and less than the current optimal detection of {} ms. Do not type ms)'.format(self.optml_mw1)))
+                            low_mw_bound = float(input('What lower value do you want to test around? (Must be greater than 0 and less than the current optimal detection of {} ms. Do not type ms)'.format(optml_mw1)))
                             print('\n')
                             #do something here so that if less than 0 will ask question again and not move fwd?
                             mw_precisetest = [low_mw_bound, high_mw_test] 
@@ -399,14 +418,14 @@ class EKG:
                 #set global variable for sm_wn, deal with sm_wn at or below 0
                 if self.metadata['analysis_info']['smooth'] == True:
                     no_low_smooth = False #default set to False, this means have the "low bound" be no smoothing 
-                    if len(self.metadata['testing_info']['sm_wn_opt']) != 1:
+                    if len(self.metadata['testing_info']['sm_wn']) != 1:
                         if low_sm_test > 0: #no harm in a low smoothing window
                             sm_precisetest = [low_sm_test, high_sm_test]
                         else: # if less than 0 wont work or if 0 then do they want no smooth?
-                            is_low_up_bound = input('Current unprecise optimal smoothing window detection is {}%. Calculated lower value for further testing is {}%, which is below zero.  Do you want to test more precisely around a value lower than the current optimal detection? [y/n]'.format(self.optml_up1, low_up_test))
+                            is_low_up_bound = input('Current unprecise optimal smoothing window detection is {}%. Calculated lower value for further testing is {}%, which is below zero.  Do you want to test more precisely around a value lower than the current optimal detection? [y/n]'.format(optml_up1, low_up_test))
                             print('\n')
                             if is_low_up_bound == 'y': #give option to set lower bound 
-                                low_up_bound = float(input('What lower value do you want to test around? (Must be greater than 0 and less than the current optimal detection of {}.) [number]'.format(self.optml_up1)))
+                                low_up_bound = float(input('What lower value do you want to test around? (Must be greater than 0 and less than the current optimal detection of {}.) [number]'.format(optml_up1)))
                                 print('\n')
                                 up_precisetest = [low_up_bound, high_up_test] #use this lower bound
                                 manual_low_up1 = True
@@ -415,7 +434,11 @@ class EKG:
                                 up_precisetest = [high_up_test] #the upper test will be there either way
                                 if no_smooth == 'y': #if they  want to try a no smooth
                                     no_low_smooth == True #test a no smoothintg as the lower bound for precise """
-    def paramcondit(self, min_ibi, max_ibi, ibi_range, up, mw, no_peak_count, sm = None):
+                else:
+                    sm_precisetest = None
+                    no_low_smooth = None
+        return manual_low_up1, manual_low_mw1, manual_low_sm1, up_precisetest, mw_precisetest, sm_precisetest, no_low_smooth, final_round, end
+    def paramcondit(self, min_ibi, max_ibi, ibi_range, up, mw, no_peak_count, final_round, sm = None):
         prob_false = [] #empty list that will contain the ibi's that are unlikely to be real
         zero_val = False  #if the approximate false detection rate is zero then loop will stop. No need to keep testing if no false detections
         for x in self.rr: # for the values in the detected ibi's
@@ -427,11 +450,11 @@ class EKG:
             approxparam = 100 * len(prob_false)/(len(self.rr)) # set the approximate parameter for false detection rate by dividing the number of false beats by total beats
             self.param_condit.append([up, mw, sm, approxparam]) # make a list that when called would show the parameters that lead to which false detection rate
             if approxparam == 0:
-                zero_val = True #there was a zero val for approx parameter 
-                self.run_precise = False # do not run precise if this is the case
+                zero_val = True #there was a zero val for approx parameter
+                final_round = True
         if len(self.rr) == 0: # if no peaks were detected add to the no peak count
             no_peak_count = no_peak_count + 1
-        return zero_val, no_peak_count
+        return zero_val, no_peak_count, final_round
 
     def rms_smooth(self, sm_wn):
         """ Smooth raw data with RMS moving window """
@@ -667,7 +690,6 @@ class EKG:
         us_min, us_max = us_rng[0] + '000', us_rng[1] + '000'
         
         # set region of interest for new peak
-        ## can modify this to include smoothing if needed
         roi = []
         for x in self.data.index:
             if x.hour == int(h) and x.minute == int(m) and x.second == int(s) and x.microsecond >= int(us_min) and x.microsecond <= int(us_max):
