@@ -123,10 +123,10 @@ class EKG:
             if detect_peaks == True:
                 broad_up, up_diff, broad_mw, mw_diff, broad_sm, sm_diff = self.prep(mw_size_opt, upshift_opt, sm_wn_opt)
                 ibi_range = self.num_beats(hb_range)
-                manual_low_up1, manual_low_mw1, manual_low_sm1, up_precisetest, mw_precisetest, sm_precisetest, no_low_smooth, final_round, end = self.broad_test(fname, fpath, min_ibi, max_ibi, detect_peaks, ibi_range, broad_up, rm_artifacts, smooth, broad_mw, up_diff, mw_diff, broad_sm, sm_diff,  final_round = False, zero_val = False, no_peak_count = 0)
-    """         if self.run_precise == True:
-                    self.precise_test1(fname, fpath, min_ibi, max_ibi, detect_peaks)
-                    if self.run_precise2 == True:
+                up_precisetest, mw_precisetest, sm_precisetest, no_low_smooth, final_round, end = self.broad_test(fname, fpath, min_ibi, max_ibi, detect_peaks, ibi_range, broad_up, rm_artifacts, smooth, broad_mw, up_diff, mw_diff, broad_sm, sm_diff,  final_round = False, zero_val = False, no_peak_count = 0)
+            """ if final_round == False and end == False:
+                    self.precise_test1(fname, fpath, min_ibi, max_ibi, detect_peaks, smooth, up_precisetest, mw_precisetest, sm_precisetest, no_low_smooth, final_round, end)
+                if self.run_precise2 == True:
                         self.precise_test2(fname, fpath, min_ibi, max_ibi, detect_peaks)
                 self.output(fname, fpath, detect_peaks)
 
@@ -277,7 +277,7 @@ class EKG:
                         test_count = test_count + 1 #increase counter
                         self.rms_smooth(sm_wn = sm)
                         self.calc_RR(smooth, mw, up, rm_artifacts, final_round)
-                        zero_val, no_peak_count, final_round = self.paramcondit(min_ibi, max_ibi, ibi_range, up, mw, sm, no_peak_count, final_round)
+                        zero_val, no_peak_count, final_round = self.paramcondit(min_ibi, max_ibi, ibi_range, up, mw, no_peak_count, final_round, sm)
                         if zero_val == True:
                             brk = True
                 else:
@@ -437,7 +437,7 @@ class EKG:
                 else:
                     sm_precisetest = None
                     no_low_smooth = None
-        return manual_low_up1, manual_low_mw1, manual_low_sm1, up_precisetest, mw_precisetest, sm_precisetest, no_low_smooth, final_round, end
+        return up_precisetest, mw_precisetest, sm_precisetest, no_low_smooth, final_round, end
     def paramcondit(self, min_ibi, max_ibi, ibi_range, up, mw, no_peak_count, final_round, sm = None):
         prob_false = [] #empty list that will contain the ibi's that are unlikely to be real
         zero_val = False  #if the approximate false detection rate is zero then loop will stop. No need to keep testing if no false detections
