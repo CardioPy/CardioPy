@@ -173,7 +173,8 @@ class EKG:
         # set detection threshold as +5% of moving average
         upshift_mult = 1 + upshift/100
         det_thres = mavg*upshift_mult
-        self.data['EKG_thres'] = det_thres # can remove this for speed, just keep as series
+        # insert threshold column at consistent position in df to ensure same color for plotting regardless of smoothing
+        self.data.insert(1, 'EKG_thres', det_thres) # can remove this for speed, just keep as series
 
         self.metadata['analysis_info']['mw_size'] = mw_size
         self.metadata['analysis_info']['upshift'] = upshift
