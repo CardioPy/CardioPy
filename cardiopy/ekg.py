@@ -5,19 +5,19 @@
     NaN data can be accounted for by removing false IBIs with rm_ibi method.
 
     TO DO:
-    	** Update docstrings **
+        ** Update docstrings **
         1. Add option to extract sampling frequency & milliseconds from time column
         2. Re-add code to import previously cleaned nn data -- DONE. 11-24-19 in hrv_stats method
         3. Add range options for indices for rm peaks and rm ibis
         4. Add more descriptive error message for ValueError encountered during
-        	add_peaks if range is outside of data
+            add_peaks if range is outside of data
         5. Add option for auto-determining threshold parameters (mw_size and upshift)
         6. Add threshold statistics (sensitivity & PPV) to output
         7. Update hrv_stats to assume NN
         8. Add nn attribute for data that doesn't require cleanings
         9. Fix spreadsheet alignment when smoothing used (incorp smooth & sm_wn metadata to all files)
         10. Option for 1000Hz interpolation prior to peak detection; Option for 4Hz resampling of NN tachogram
-        	rather than original sampling frequencys
+            rather than original sampling frequencys
 
 """
 
@@ -173,6 +173,9 @@ class EKG:
         # set detection threshold as +5% of moving average
         upshift_mult = 1 + upshift/100
         det_thres = mavg*upshift_mult
+
+        # insert threshold column at consistent position in df to ensure same color for plotting regardless of smoothing
+
         self.data.insert(1, 'EKG_thres', det_thres) # can remove this for speed, just keep as series
 
         self.metadata['analysis_info']['mw_size'] = mw_size
@@ -207,12 +210,20 @@ class EKG:
                 roi_start = x
                 # count forwards to find down-crossing
                 for h in range(x, len(raw), 1):
+                    # if value drops below threshold, end ROI
                     if raw[h] < thres[h]:
                         roi_end = h
                         break
-                # get maximum between roi_start and roi_end
-                peak = raw[x:h].idxmax()
-                peaks.append(peak)
+                    # else if data ends before dropping below threshold, leave ROI open
+                    # & advance h pointer to end loop
+                    elif (raw[h] >= thres[h]) and (h == len(raw)-1):
+                        roi_end = None
+                        h += 1
+                        break
+                # if ROI is closed, get maximum between roi_start and roi_end
+                if roi_end:
+                    peak = raw[x:h].idxmax()
+                    peaks.append(peak)
                 # advance the pointer
                 x = h
             else:
@@ -1038,7 +1049,7 @@ class EKG:
 
 
     ## plotting methods ##
-	def plotpeaks(self, rpeaks=True, ibi=True):
+    def plotpeaks(self, rpeaks=True, ibi=True):
         """ plot EKG class instance """
         # set number of panels
         if ibi == True:
