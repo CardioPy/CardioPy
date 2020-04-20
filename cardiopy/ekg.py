@@ -394,9 +394,15 @@ class EKG:
                 roi.append(x)
 
         # define new rpeak
-        peak_idx = self.data.loc[roi]['Raw'].idxmax()
-        peak_val = self.data['Raw'].loc[peak_idx]
-        new_peak = pd.Series(peak_val, [peak_idx])
+        if self.metadata['analysis_info']['smooth'] == False:
+            peak_idx = self.data.loc[roi]['Raw'].idxmax()
+            peak_val = self.data['Raw'].loc[peak_idx]
+            new_peak = pd.Series(peak_val, [peak_idx])
+
+        if self.metadata['analysis_info']['smooth'] == True:
++            peak_idx = self.data.loc[roi]['raw_smooth'].idxmax()
++            peak_val = self.data['raw_smooth'].loc[peak_idx]
++            new_peak = pd.Series(peak_val, [peak_idx])
 
         # add peak to rpeaks list
         self.rpeaks = self.rpeaks.append(new_peak)
