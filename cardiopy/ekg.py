@@ -1,4 +1,4 @@
-""" This file contains the EKG class 
+""" This file contains the EKG class . Testing
 
     All R peak detections should be manually inspected with EKG.plotpeaks method and
     false detections manually removed with rm_peaks method. After rpeak examination, 
