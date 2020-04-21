@@ -1041,16 +1041,28 @@ class EKG:
 
 
     ## plotting methods ##
-    def plotpeaks(self, rpeaks=True, ibi=True):
+    def plotpeaks(self, rpeaks=True, ibi=True, thres = True):
         """ plot EKG class instance """
         # set number of panels
         if ibi == True:
             plots = ['ekg', 'ibi']
-            data = [self.data, self.rpeaks_df['ibi_ms']]
+            if thres == True:
+                data = [self.data, self.rpeaks_df['ibi_ms']]
+            if thres == False:
+                if self.metadata['analysis_info']['smooth'] == False:
+                    data = [self.data['Raw'], self.rpeaks_df['ibi_ms']]
+                if self.metadata['analysis_info']['smooth'] == True:
+                    data = [self.data[['Raw', 'raw_smooth']], self.rpeaks_df['ibi_ms']]
             
         else:
             plots = ['ekg']
-            data = [self.data]
+            if thres == True:
+                data = [self.data]
+            if thres == False:
+                if self.metadata['analysis_info']['smooth'] == False:
+                    data = [self.data['Raw']]
+                if self.metadata['analysis_info']['smooth'] == True:
+                    data = [self.data[['Raw', 'raw_smooth']]]
 
         fig, axs = plt.subplots(len(plots), 1, sharex=True, figsize = [9.5, 6])
         
