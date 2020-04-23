@@ -1,4 +1,4 @@
-""" This file contains the EKG class 
+""" This file contains the EKG class .
 
     All R peak detections should be manually inspected with EKG.plotpeaks method and
     false detections manually removed with rm_peaks method. After rpeak examination, 
@@ -1057,8 +1057,8 @@ class EKG:
         if len(plots) > 1:
             for dat, ax, plot in zip(data, axs, plots):
                 if plot == 'ekg' and rpeaks == True:
-                    ax.plot(dat)
-                    ax.scatter(self.rpeaks.index, self.rpeaks.values, color='red')
+                    ax.plot(dat, zorder = 1)
+                    ax.scatter(self.rpeaks.index, self.rpeaks.values, color='red', zorder = 2)
                     ax.set_ylabel('EKG (mV)')
                 elif plot == 'ibi':
                     ax.plot(dat, color='grey', marker='.', markersize=8, markerfacecolor=(0, 0, 0, 0.8), markeredgecolor='None')
@@ -1070,8 +1070,8 @@ class EKG:
         else:
             for dat, plot in zip(data, plots):
                 if plot == 'ekg' and rpeaks == True:
-                    axs.plot(dat)
-                    axs.scatter(self.rpeaks.index, self.rpeaks.values, color='red')
+                    axs.plot(dat, zorder = 1)
+                    axs.scatter(self.rpeaks.index, self.rpeaks.values, color='red', zorder = 2)
                     axs.set_ylabel('EKG (mV)')
                     axs.set_xlabel('Time')
                 axs.margins(x=0)
