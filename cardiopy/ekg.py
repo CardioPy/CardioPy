@@ -1077,6 +1077,18 @@ class EKG:
                     ax.plot(dat)
                     ax.scatter(self.rpeaks.index, self.rpeaks.values, color='red')
                     ax.set_ylabel('EKG (mV)')
+                    if thres == True:
+                        if self.metadata['analysis_info']['smooth'] == True:
+                            ax.legend(('raw data', 'threshold line', 'smoothed data', 'rpeak'), fontsize = 'small')
+                        else:
+                            ax.legend(('raw data', 'threshold line', 'rpeak'), fontsize = 'small')
+                    else:
+                        if self.metadata['analysis_info']['smooth'] == True:
+                            ax.legend(('raw data', 'smoothed data', 'rpeak'), fontsize = 'small')
+                        else:
+                            ax.legend(('raw data', 'rpeak'), fontsize = 'small')
+
+
                 elif plot == 'ibi':
                     ax.plot(dat, color='grey', marker='.', markersize=8, markerfacecolor=(0, 0, 0, 0.8), markeredgecolor='None')
                     ax.set_ylabel('Inter-beat interval (ms)')
