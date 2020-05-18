@@ -1116,23 +1116,23 @@ class EKG:
         # or plot spectrum colored by frequency band
         elif bands == True:
             # use matplotlib.patches.Patch to make objects for legend w/ data
-            ax.plot(psd['freqs'], pwr, color='black')
+            ax.plot(psd['freqs'], pwr, color='black', zorder=10)
             
             yline = SG.LineString(list(zip(psd['freqs'],pwr)))
-            #ax.plot(yline, color='black')
+            zord_alpha = {0:0.6, 1:0.6, 2:0.8, 3:1.0}
             
-            colors = [None, 'yellow', 'orange', 'tomato']
-            for (key, value), color in zip(self.psd_fband_vals.items(), colors):
+            colors = [None, 'yellow', 'darkorange', 'tomato']
+            for (zord, alpha), (key, value), color in zip(self.psd_fband_vals.items(), colors):
                 if value['idx'] is not None:
                     # get intercepts & plot vertical lines for bands
                     xrange = [float(x) for x in self.freq_stats[key]['freq_range'][1:-1].split(",")] 
                     xline = SG.LineString([(xrange[1], min(pwr)), (xrange[1], max(pwr))])
                     coords = np.array(xline.intersection(yline))            
-                    ax.vlines(coords[0], 0, coords[1], colors='black', linestyles='dotted')
+                    ax.vlines(coords[0], 0, coords[1], colors='black', linestyles='dotted', zorder=8)
                     
                     # fill spectra by band
-                    ax.fill_between(psd['freqs'], pwr, where = [xrange[0] <= x <=xrange[1] for x in psd['freqs']], 
-                                    facecolor=color, alpha=.6)    
+                    ax.fill_between(psd['freqs'], pwr, where = [xrange[0] <= x for x in psd['freqs']], 
+                                    facecolor=color, alpha=alpha, zorder=zord)    
             
         ax.set_xlim(0, 0.4)
         ax.margins(y=0)
