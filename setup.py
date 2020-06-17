@@ -15,11 +15,12 @@ setuptools.setup(
 	packages = setuptools.find_packages(),
 	classifiers = [
 		"Programming Language :: Python :: 3",
-		"License :: OSI Approved :: MIT License",
+		"License :: OSI Approved :: TBD",
 		"Operating System :: OS Indepedent",
+		"Intended Audience :: Healthcare Researchers",
+		"Topic :: Healthcare :: Heart Rate Variability"
 		],
 	python_requires = '>=3.6',
-	setup_requires=["numpy"],
 	install_requires = [
 		"datetime",
 		"matplotlib",
@@ -28,6 +29,7 @@ setuptools.setup(
 		"scipy",
 		"shapely",
 		"statistics",
-		"mne"
+		"mne",
+		"numpy"
 	]
 	)
