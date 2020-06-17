@@ -1,4 +1,8 @@
-""" This file contains the EKG class .
+""" This file contains methods to visualize EKG data, clean EKG data and run EKG analyses.
+
+    Classes
+    -------
+    EKG
 
     All R peak detections should be manually inspected with EKG.plotpeaks method and
     false detections manually removed with rm_peaks method. After rpeak examination, 
@@ -38,13 +42,26 @@ from scipy.signal import welch
 class EKG:
     """ General class containing EKG analyses
     
-    Parameters
-    ----------
-    df: pd.DataFrame
-        Dataframe containing 'EKG' column data. First two rows are headers [Channel, Datatype]
-    
     Attributes
     ----------
+    metadata : dict of {str: str: str}
+        File information and analysis information.
+    data : DataFrame
+        Raw data of the EKG signal (V) and the threshold line (V) at each sampled time point.
+    rpeak_artifacts : Series
+        False R peak detections that have been removed.
+    rpeaks_added : Series
+        R peak detections that have been added.
+    ibi_artifacts : pd.Series
+        Interbeat interval data that has been removed.
+    rpeaks : Series
+        Cleaned R peaks data without removed peaks and with added peaks.
+    rr : np.ndarray
+        Time between R peaks (ms).
+    nn : np.ndarray
+        Cleaned time between R peaks (ms) without removed interbeat interval data.
+    rpeaks_df : DataFrame
+        Raw EKG value (V) and corresponding interbeat interval leading up to the data point (ms) at each sampled point.
     """
 
     def __init__(self, fname, fpath, min_dur=True, epoched=True, smooth=False, sm_wn=30, mw_size=100, upshift=3.5, rm_artifacts=False, detect_peaks=True):
@@ -56,25 +73,27 @@ class EKG:
             filename
         fpath: str
             path to file
-        min_dur: bool (default:True)
-            only load files that are >= 5 minutes long
+        min_dur: bool (default : True)
+            Only load files that are >= 5 minutes long.
         epoched: bool (default: True)
-            Whether file was epoched using ioeeg
+            whether file was epoched using ioeeg
         smooth: BOOL (default: False)
             Whether raw signal should be smoothed before peak detections. Set True if raw data has consistent high frequency noise
             preventing accurate peak detection
         sm_wn: float (default: 30)
-            Size of moving window for rms smoothing preprocessing (milliseconds)
+            size of moving window for rms smoothing preprocessing (milliseconds)
         mw_size: float (default: 100)
             Moving window size for R peak detection (milliseconds)
         upshift: float (default: 3.5)
             Detection threshold upshift for R peak detection (% of signal)
         rm_artifacts: bool (default: False)
             Apply IBI artifact removal algorithm
+        detect_peaks: bool (default: True)
+            option to detect R peaks and calculate interbeat intervals
 
         Returns
         -------
-        EKG object w/ R peak detections and calculated inter-beat intervals
+        EKG object. Includes w/ R peak detections and calculated inter-beat intervals if detect_peaks is set to True.
          """
 
         # set metadata
@@ -112,7 +131,7 @@ class EKG:
         
     def load_ekg(self, min_dur):
         """ 
-        Load ekg data and extract sampling frequency. 
+        Load EKG data and extract sampling frequency. 
         
         Parameters
         ----------
