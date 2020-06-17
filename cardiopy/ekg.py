@@ -40,7 +40,7 @@ from pandas.plotting import register_matplotlib_converters
 from scipy.signal import welch
 
 class EKG:
-    """ General class containing EKG analyses
+    """ Run EKG analyses including cleaning and visualizing data.
     
     Attributes
     ----------
@@ -65,36 +65,36 @@ class EKG:
     """
 
     def __init__(self, fname, fpath, min_dur=True, epoched=True, smooth=False, sm_wn=30, mw_size=100, upshift=3.5, rm_artifacts=False, detect_peaks=True):
-        """ Initialize raw EKG object
+        """ Initialize raw EKG object.
 
         Parameters
         ----------
-        fname: str
+        fname : str
             Filename.
-        fpath: str
+        fpath : str
             Path to file.
-        min_dur: bool (default : True)
+        min_dur : bool, default True
             Only load files that are >= 5 minutes long.
-        epoched: bool (default: True)
+        epoched : bool, default True
             Whether file was epoched using ioeeg.
-        smooth: BOOL (default: False)
+        smooth : bool, default False
             Whether raw signal should be smoothed before peak detections. Set True if raw data has consistent high frequency noise
             preventing accurate peak detection.
-        sm_wn: float (default: 30)
+        sm_wn : float, default 30
             Size of moving window for rms smoothing preprocessing (milliseconds).
-        mw_size: float (default: 100)
+        mw_size : float, default 100
             Moving window size for R peak detection (milliseconds).
-        upshift: float (default: 3.5)
+        upshift : float, default 3.5
             Detection threshold upshift for R peak detection (% of signal).
-        rm_artifacts: bool (default: False)
+        rm_artifacts : bool, default False
             Apply IBI artifact removal algorithm.
-        detect_peaks: bool (default: True)
+        detect_peaks : bool, default True
             Option to detect R peaks and calculate interbeat intervals.
 
         Returns
         -------
-        EKG object. Includes w/ R peak detections and calculated inter-beat intervals if detect_peaks is set to True.
-         """
+        EKG object. Includes R peak detections and calculated inter-beat intervals if detect_peaks is set to True.
+        """
 
         # set metadata
         filepath = os.path.join(fpath, fname)
