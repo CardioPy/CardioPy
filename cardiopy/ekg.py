@@ -70,26 +70,26 @@ class EKG:
         Parameters
         ----------
         fname: str
-            filename
+            Filename.
         fpath: str
-            path to file
+            Path to file.
         min_dur: bool (default : True)
             Only load files that are >= 5 minutes long.
         epoched: bool (default: True)
-            whether file was epoched using ioeeg
+            Whether file was epoched using ioeeg.
         smooth: BOOL (default: False)
             Whether raw signal should be smoothed before peak detections. Set True if raw data has consistent high frequency noise
-            preventing accurate peak detection
+            preventing accurate peak detection.
         sm_wn: float (default: 30)
-            size of moving window for rms smoothing preprocessing (milliseconds)
+            Size of moving window for rms smoothing preprocessing (milliseconds).
         mw_size: float (default: 100)
-            Moving window size for R peak detection (milliseconds)
+            Moving window size for R peak detection (milliseconds).
         upshift: float (default: 3.5)
-            Detection threshold upshift for R peak detection (% of signal)
+            Detection threshold upshift for R peak detection (% of signal).
         rm_artifacts: bool (default: False)
-            Apply IBI artifact removal algorithm
+            Apply IBI artifact removal algorithm.
         detect_peaks: bool (default: True)
-            option to detect R peaks and calculate interbeat intervals
+            Option to detect R peaks and calculate interbeat intervals.
 
         Returns
         -------
