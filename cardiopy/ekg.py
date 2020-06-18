@@ -856,20 +856,21 @@ class EKG:
 
 
     def calc_fstats(self, itype, method, bandwidth, window, bands=None):
-        """ Calculate frequency domain statistics 
+        """
+        Calculate frequency domain statistics.
 
         Parameters
         ----------
-        itype: str
-            interval type (options: 'rr', 'nn')
-        method: str, optional (default: 'mt')
-            Method to compute power spectra. options: 'welch', 'mt' (multitaper)
-        bandwith: float, optional (default: 0.02)
-            Bandwidth for multitaper power spectral estimation
-        window: str, optional (default: 'hamming')
-            Window to use for welch FFT. See mne.time_frequency.psd_array_multitaper for options
+        itype : str {'rr, 'nn'}
+            Interval type.'rr' is uncleaned data. 'nn' is normal intervals (cleaned).
+        method: str, optional, {'mt, 'welch'}
+            Method to compute power spectra. 'mt' is multitaper.
+        bandwith: float, optional, default 0.02
+            Bandwidth for multitaper power spectral estimation.
+        window: str, optional, default 'hamming'
+            Window to use for welch FFT. See mne.time_frequency.psd_array_multitaper for options.
         bands: Nonetype
-            Frequency bands of interest. Leave as none for default. To do: update for custom bands
+            Frequency bands of interest. To do: update for custom bands
         """
         # resample & interpolate tachogram
         print('Interpolating and resampling tachogram...')
