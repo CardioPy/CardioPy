@@ -146,7 +146,16 @@ class EKG:
         print('EKG successfully imported.')
 
     def rms_smooth(self, sm_wn):
-        """ Smooth raw data with RMS moving window """
+        """ 
+        Smooth raw data with root mean square (RMS) moving window.
+
+        Reduce noise leading to false R peak detections.
+
+        Parameters
+        ----------
+        sm_wn : float, default 30
+            Size of moving window for RMS smoothing preprocessing (ms).
+        """
         self.metadata['analysis_info']['smooth'] = True
         self.metadata['analysis_info']['rms_smooth_wn'] = sm_wn
         
