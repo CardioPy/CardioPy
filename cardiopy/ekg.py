@@ -156,17 +156,21 @@ class EKG:
 
     def set_Rthres(self, smooth, mw_size, upshift):
         """
-        Set R peak detection threshold based on moving average shifted up by a percentage of the signal.
+        Set R peak detection threshold based on moving average shifted up by a percentage of the EKG signal.
         
         Parameters
         ----------
-
-        smooth : bool
+        smooth : bool, default False
             If set to True, data will be smoothed using RMS smoothing window.
-        mw_size : float
+        mw_size : float, default 100
             Time over which the moving average of the EKG signal will be taken to calculate the R peak detection threshold (ms).
-        upshift : float
+        upshift : float, default 3.5
             Percentage of EKG signal that the moving average will be shifted up by to set the R peak detection threshold.
+
+        See Also
+        --------
+        EKG.rms_smooth : Smooth raw EKG data with root mean square (RMS) moving window.
+
         """
         print('Calculating moving average with {} ms window and a {}% upshift...'.format(mw_size, upshift))
         
