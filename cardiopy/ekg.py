@@ -789,7 +789,15 @@ class EKG:
         self.metadata['analysis_info']['psd_method'] = 'multitaper'
 
     def calc_fbands(self, method, bands):
-        """ Calculate different frequency band measures 
+        """
+        Calculate frequency band measures.
+
+        Parameters
+        ----------
+        method : str {'welch', 'mt'}
+            Method to be used to calculate frequency band measures.
+        bands : 
+
             TO DO: add option to change bands
             Note: modified from pyHRV
             * normalized units are normalized to total lf + hf power, according to Heathers et al. (2014)
