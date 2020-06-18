@@ -925,16 +925,24 @@ class EKG:
         print('Done.')
 
     def to_spreadsheet(self, spreadsheet, savedir):
-        """ Append calculations as a row in master spreadsheet. Creates new spreadsheet
-            if output file does not exist. 
-            
-            Parameters
-            ----------
-            ekg: EKG object
-            spreadsheet: .csv
-                output file (new or existing)
         """
-        
+        Append calculations as a row in master spreadsheet.
+
+        Information exported includes arrays 'data', 'rpeaks', 'rr', 'rr_diff', 'rr_diffsq', 'rpeak_artifacts', 'rpeaks_added', 'ibi_artifacts',
+        'rpeaks_df', 'nn', 'nn_diff', 'nn_diffsq', 'rr_arts', 'ii_interp', 'psd_mt', 'psd_welch', 'psd_fband_vals' if calculated. 
+
+        Parameters
+        ----------
+        savedir : str
+            Path to directory where spreadsheet will be saved. 
+
+        spreadsheet : str
+            Name of output file. 
+
+        Notes
+        -----
+        Creates new spreadsheet if output file does not exist. 
+        """
         # this is from before division to two classes. 'data' and 'rpeaks' arrays shouldn't exist in IBI object.
         arrays = ['data', 'rpeaks', 'rr', 'rr_diff', 'rr_diffsq', 'rpeak_artifacts', 'rpeaks_added', 'ibi_artifacts',
         'rpeaks_df', 'nn', 'nn_diff', 'nn_diffsq', 'rr_arts', 'ii_interp', 'psd_mt', 'psd_welch', 'psd_fband_vals']
