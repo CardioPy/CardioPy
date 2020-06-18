@@ -237,11 +237,12 @@ class EKG:
 
     def rm_peaks(self, time):
         """ 
-        Examine a second of interest and manually remove artifact peaks
+        Examine a second of interest and manually remove artifact R peaks.
         
         Parameters
         ----------
-        time: str format 'hh:mm:ss'
+        time: str 
+        Time in the format 'hh:mm:ss' dictating the second containing the peak of interest.
         
         Returns
         -------
@@ -479,14 +480,23 @@ class EKG:
         self.nn = self.rr    
 
     def rm_ibi(self, thres = 3000):
-        """ Manually remove IBI's corresponding to missing data (due to cleaning) or missed beats that can't be
-            manually added with ekg.add_peak() method
-            NOTE: This step must be completed LAST, after removing any false peaks and adding any missed peaks
+        """
+        Manually remove IBI's that can't be manually added with EKG.add_peak() method.
         
-            Parameters
-            ----------
-            thres: int
-                threshold in milliseconds for automatic IBI removal
+        IBIs to be removed could correspond to missing data (due to cleaning) or missed beats.
+
+        Parameters
+        ----------
+        thres: int, default 3000
+            Threshold time for automatic IBI removal (ms).
+
+        Notes
+        -----
+        This step must be completed LAST, after removing any false peaks and adding any missed peaks.
+
+        See Also
+        --------
+        EKG.add_peak : Manually add missed R peaks. 
         """
         
         # check for extra-long IBIs & option to auto-remove
