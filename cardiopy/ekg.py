@@ -562,8 +562,23 @@ class EKG:
             self.rm_artifacts()
 
     def export_RR(self, savedir):
-        """ Export R peaks and RR interval data to .txt files """
+        """
+        Export R peaks and RR interval data to .txt files.
 
+        Includes list of R peaks artifacts, R peaks added, R peaks detected, IBI artifacts, RR intervals and NN intervals.
+
+        Parameters
+        ----------
+        savedir : str
+            Path to directory where .txt files will be saved.
+
+        See Also
+        --------
+        EKG.calc_RR : Set R peak detection threshold, detect R peaks and calculate R-R intervals.
+        EKG.rm_ibi :  Manually remove IBI's that can't be manually added with EKG.add_peak() method.
+        EKG.add_peak : Manually add missed R peak. 
+        EKG.rm_peak : Examine a second of interest and manually remove artifact R peaks.
+        """
         # set save directory
         if savedir is None:
             savedir = os.getcwd()
