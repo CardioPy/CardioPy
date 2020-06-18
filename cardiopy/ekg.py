@@ -703,24 +703,24 @@ class EKG:
 
     
     def interpolateII(self, itype):
-        """ Resample tachogram to original sampling frequency and interpolate for power spectral estimation.
+        """
+        Resample tachogram to original sampling frequency and interpolate for power spectral estimation.
 
-            This is done since RRs are not evenly placed.
+        This is done since RRs are not evenly placed.
 
-            Parameters
-            ----------
-            itype : str {'rr, 'nn'}
-            Interval type.'rr' is uncleaned data. 'nn' is normal intervals (cleaned).
-            
-            Note
-            ----
-            Adapted from pyHRV
+        Parameters
+        ----------
+        itype : str {'rr, 'nn'}
+        Interval type.'rr' is uncleaned data. 'nn' is normal intervals (cleaned).
+        
+        Note
+        ----
+        Adapted from pyHRV
 
-            See Also
-            --------
-
-            EKG.calc_psd_welch : Calculate welch power spectrum.
-            EKG.calc_psd_mt : Calculate multitaper power spectrum.
+        See Also
+        --------
+        EKG.calc_psd_welch : Calculate welch power spectrum.
+        EKG.calc_psd_mt : Calculate multitaper power spectrum.
         """
         # specify data
         if itype == 'rr':
