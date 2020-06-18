@@ -116,7 +116,7 @@ class EKG:
         
         Parameters
         ----------
-        min_dur: bool, default True
+        min_dur : bool, default True
             If set to True, will not load files shorter than the minimum duration length of 5 minutes.
         """
         
