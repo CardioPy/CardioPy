@@ -663,6 +663,14 @@ class EKG:
         ----------
         itype : str {'rr, 'nn'}
             Interval type.'rr' is uncleaned data. 'nn' is normal intervals (cleaned).
+
+        See Also
+        --------
+        EKG.hrv_stats : Calculate all HRV statistics on IBI object.
+        EKG.calc_fstats : Calculate frequency domain statistics.
+        EKG.calc_psd_welch : Calculate welch power spectrum.
+        EKG.calc_psd_mt : Calculate multitaper power spectrum. 
+        EKG.calc_fbands : Calculate different frequency band measures.
         """   
         print('Calculating time domain statistics...')
 
