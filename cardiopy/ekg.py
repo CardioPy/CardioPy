@@ -185,18 +185,30 @@ class EKG:
         self.ibi_artifacts = pd.Series()
 
     def detect_Rpeaks(self, smooth):
-        """ detect R peaks from raw signal """
-        print('Detecting R peaks...')
+        """ 
+        Detect R peaks of raw or smoothed EKG signal based on detection threshold. 
+        Parameters
+        ----------
+        smooth : bool, default False
+        If set to True, raw EKG data is smoothed using a RMS smoothing window.
 
+        See Also
+        --------
+        EKG.rms_smooth : Smooth raw EKG data with root mean square (RMS) moving window
+        EKG.set_Rthres : Set R peak detection threshold based on moving average shifted up by a percentage of the EKG signal.
+        """
+        print('Detecting R peaks...')
+        #Use the raw data or smoothed data depending on bool smooth
         if smooth == False:
             raw = pd.Series(self.data['Raw'])
         elif smooth == True:
             raw = pd.Series(self.data['raw_smooth'])
         
         thres = pd.Series(self.data['EKG_thres'])
-        
+        #create empty peaks list
         peaks = []
         x = 0
+        #Within the length of the data if the value of raw data (could be smoothed raw data) is less than ekg threshold keep counting forwards
         while x < len(raw):
             if raw[x] > thres[x]:
                 roi_start = x
