@@ -651,12 +651,18 @@ class EKG:
 
 
     def calc_tstats(self, itype):
-        """ Calculate commonly used time domain HRV statistics. Min/max HR is determined over 5 RR intervals 
+        """
+        Calculate commonly used time domain HRV statistics.
 
-            Params
-            ------
-            itype: str, 
-                Interval type (Options:'rr', 'nn'). 'rr' is uncleaned data. 'nn' is normal intervals (cleaned)
+        Time domain HRV statistics include mean, min and max HR (bpm), mean interbeat interval length, SDNN, RMSSD, pNN20 and pNN50.
+        SDNN is the standard deviation of normal to normal IBI. RMSSD is the root mean squared standard deviation of normal interbeat interval length.
+        pNN20 and pNN50 are the percentage of normal interbeat intervals that exceed 20ms and 50ms respectively.
+        Min and max HR is determined over 5 RR intervals.
+
+        Parameters
+        ----------
+        itype : str {'rr, 'nn'}
+            Interval type.'rr' is uncleaned data. 'nn' is normal intervals (cleaned).
         """   
         print('Calculating time domain statistics...')
 
