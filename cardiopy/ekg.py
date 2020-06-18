@@ -155,11 +155,24 @@ class EKG:
 
 
     def set_Rthres(self, smooth, mw_size, upshift):
-        """ set R peak detection threshold based on moving average + %signal upshift """
+        """
+        Set R peak detection threshold based on moving average shifted up by a percentage of the signal.
+        
+        Parameters
+        ----------
+
+        smooth : bool
+            If set to True, data will be smoothed using RMS smoothing window.
+        mw_size : float
+            Time over which the moving average of the EKG signal will be taken to calculate the R peak detection threshold (ms).
+        upshift : float
+            Percentage of EKG signal that the moving average will be shifted up by to set the R peak detection threshold.
+        """
         print('Calculating moving average with {} ms window and a {}% upshift...'.format(mw_size, upshift))
         
         # convert moving window to sample & calc moving average over window
         mw = int((mw_size/1000)*self.metadata['analysis_info']['s_freq'])
+        #if smooth is true have the moving average calculated based off of smoothed data
         if smooth == False:
             mavg = self.data.Raw.rolling(mw).mean()
             ekg_avg = np.mean(self.data['Raw'])
@@ -170,12 +183,13 @@ class EKG:
         # replace edge nans with overall average
         mavg = mavg.fillna(ekg_avg)
 
-        # set detection threshold as +5% of moving average
+        # set detection threshold as +upshift% of moving average
         upshift_mult = 1 + upshift/100
         det_thres = mavg*upshift_mult
         # insert threshold column at consistent position in df to ensure same color for plotting regardless of smoothing
         self.data.insert(1, 'EKG_thres', det_thres) # can remove this for speed, just keep as series
 
+        #set metadata
         self.metadata['analysis_info']['mw_size'] = mw_size
         self.metadata['analysis_info']['upshift'] = upshift
 
