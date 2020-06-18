@@ -237,12 +237,11 @@ class EKG:
 
     def rm_peaks(self, time):
         """ 
-        Examine a second of interest and manually remove artifact R peaks.
+        Examine a second of interest and manually remove artifact peaks
         
         Parameters
         ----------
-        time: str 
-        Time in the format 'hh:mm:ss' dictating the second containing the peak of interest.
+        time: str format 'hh:mm:ss'
         
         Returns
         -------
