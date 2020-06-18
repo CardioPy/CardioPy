@@ -161,7 +161,7 @@ class EKG:
         Parameters
         ----------
         smooth : bool, default False
-            If set to True, data will be smoothed using RMS smoothing window.
+            If set to True, raw EKG data will be smoothed using RMS smoothing window.
         mw_size : float, default 100
             Time over which the moving average of the EKG signal will be taken to calculate the R peak detection threshold (ms).
         upshift : float, default 3.5
