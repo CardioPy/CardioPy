@@ -295,17 +295,27 @@ class EKG:
 
 
     def undo_rm_peaks(self, time):
-        """ add back incorrectly removed peaks from rm_peaks() method
-            NOTE: This is strictly an "undo" method. It is NOT equivalent to add_peaks().
+        """
+        Add back incorrectly removed peaks from EKG.rm_peaks method.
             
-            Parameters
-            ----------
-            time: str (format 'hh:mm:ss')
-                second of incorrectly removed peak
-            
-            Returns
-            -------
-            Modified self.rpeaks, self.rpeaks_df, self.rr, self.nn, and self.rpeaks_artifacts attributes
+        Parameters
+        ----------
+        time: str {'hh:mm:ss'}
+        Second of incorrectly removed R peak.
+
+        Notes
+        -----
+        This is strictly an "undo" method. It is NOT equivalent to add_peaks().
+
+        Returns
+        -------
+        Modified self.rpeaks, self.rpeaks_df, self.rr, self.nn, and self.rpeaks_artifacts attributes
+
+        See Also
+        --------
+        EKG.rm_peaks : Examine a second of interest and manually remove artifact R peaks.
+        EKG.add_peaks : Examine a second of interest and manually add missed R peaks.
+        EKG.undo_add_peak : Add back incorrectly added peaks from EKG.add_peaks method.
         """
         
         if len(self.rpeak_artifacts) == 0:
