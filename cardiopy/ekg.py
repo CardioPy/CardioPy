@@ -315,7 +315,7 @@ class EKG:
         --------
         EKG.rm_peaks : Examine a second of interest and manually remove artifact R peaks.
         EKG.add_peak : Examine a second of interest and manually add missed R peaks.
-        EKG.undo_add_peak : Manually add back incorrectly added peaks from EKG.add_peaks method.
+        EKG.undo_add_peak : Manually remove incorrectly added peaks from EKG.add_peak method.
         """
         
         if len(self.rpeak_artifacts) == 0:
