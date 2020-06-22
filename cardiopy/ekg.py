@@ -740,6 +740,10 @@ class EKG:
             'rr' is uncleaned data. 'nn' is normal intervals (cleaned).
         window : str
             Windowing function. Options from scipy.signal welch. (wrapper default: 'hamming')
+
+        See Also
+        --------
+        EKG.calc_psd_mt : Calculate multitaper power spectrum.
         """
         
         self.metadata['analysis_info']['psd_method'] = 'welch'
