@@ -360,16 +360,24 @@ class EKG:
         self.nn = self.rr    
 
     def add_peak(self, time):
-        """ manually add missed peaks 
+        """
+        Examine a second of interest and manually add missed R peaks.
 
         Parameters
         ----------
-        time: str format 'hh:mm:ss'
-        
+        time : str {'hh:mm:ss'}
+            Second within which peak is to be added.
+
         Returns
         -------
         Modified self.rpeaks, self.rpeaks_df, self.rr, and self.nn attributes. Added peaks stored in 
         self.rpeaks_added attribute.
+
+        See Also
+        --------
+        EKG.undo_add_peak : Manually add back incorrectly added R peaks from EKG.add_peak method.
+        EKG.rm_peaks : Examine a second of interest and manually remove artifact R peak.
+        EKG.undo_rm_peak : Manually add back incorrectly removed R peaks from EKG.rm_peaks method.
         """
         
         # specify time range of missed peak
