@@ -1126,6 +1126,11 @@ class EKG:
             If True, 
         savedir : str
             Path to directory where spectrum is to be saved. 
+
+        See Also
+        --------
+        EKG.calc_psd_mt : Calculate multitaper power spectrum.
+        EKG.calc_psd_welch : Calculate welch power spectrum. 
         """
         
         # set title
