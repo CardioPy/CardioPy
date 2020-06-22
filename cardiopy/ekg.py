@@ -1116,15 +1116,16 @@ class EKG:
 
         Parameters
         ----------
-        method : str, default 'mt' {'mt', 'welch'}
+        method : str, {'mt', 'welch'}
             Method by which power spectrum is to be calculated.
+            'mt' is multitaper.
         dB : bool, default False
             If True, decibals used as unit for power spectral density instead of s^2/Hz
         bands : bool, default True
             If True, spectrum ploted colored by frequency band.
         save : bool, default True
             If True, 
-        savedir : str
+        savedir : str, optional
             Path to directory where spectrum is to be saved. 
 
         See Also
