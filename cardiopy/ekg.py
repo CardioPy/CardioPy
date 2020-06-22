@@ -862,7 +862,8 @@ class EKG:
         Parameters
         ----------
         itype : str {'rr, 'nn'}
-            Interval type.'rr' is uncleaned data. 'nn' is normal intervals (cleaned).
+            Interval type.
+            'rr' is uncleaned data. 'nn' is normal intervals (cleaned).
         method : str, {'mt, 'welch'}
             Method to compute power spectra.
             'mt' is multitaper.
