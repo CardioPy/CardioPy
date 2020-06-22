@@ -1045,7 +1045,7 @@ class EKG:
             psd_mt_df.to_csv(psdfile, index=False)
 
 
-    ## plotting methods ##
+    # plotting methods
     def plotpeaks(self, rpeaks=True, ibi=True, thres = True):
         """ plot EKG class instance """
         # set number of panels
@@ -1111,9 +1111,24 @@ class EKG:
 
 
     def plotPS(self, method='mt', dB=False, bands=True, save=True, savedir=None):
-        """ Plot power spectrum """
+        """
+        Plot power spectrum with method of choice.
+
+        Parameters
+        ----------
+        method : str, default 'mt' {'mt', 'welch'}
+            Method by which power spectrum is to be calculated.
+        dB : bool, default False
+            If True, decibals used as unit for power spectral density instead of s^2/Hz
+        bands : bool, default True
+            If True, spectrum ploted colored by frequency band.
+        save : bool, default True
+            If True, 
+        savedir : str
+            Path to directory where spectrum is to be saved. 
+        """
         
-         # set title
+        # set title
         title = self.metadata['file_info']['in_num'] + ' ' + self.metadata['file_info']['start_date'] + '\n' + self.metadata['file_info']['sleep_stage'] + ' ' + self.metadata['file_info']['cycle']
         try:
             n.metadata['file_info']['epoch']
