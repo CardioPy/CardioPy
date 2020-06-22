@@ -857,20 +857,26 @@ class EKG:
 
     def calc_fstats(self, itype, method, bandwidth, window, bands=None):
         """
-        Calculate frequency domain statistics.
+        Calculate commonly used frequency domain HRV statistics.
 
         Parameters
         ----------
         itype : str {'rr, 'nn'}
             Interval type.'rr' is uncleaned data. 'nn' is normal intervals (cleaned).
-        method: str, optional, {'mt, 'welch'}
-            Method to compute power spectra. 'mt' is multitaper.
-        bandwith: float, optional, default 0.02
+        method : str, {'mt, 'welch'}
+            Method to compute power spectra.
+            'mt' is multitaper.
+        bandwith : float
             Bandwidth for multitaper power spectral estimation.
-        window: str, optional, default 'hamming'
+        window : str
             Window to use for welch FFT. See mne.time_frequency.psd_array_multitaper for options.
-        bands: Nonetype
+        bands : ?
             Frequency bands of interest. To do: update for custom bands
+
+        See Also
+        --------
+        EKG.calc_tstats : Calculate commonly used time domain HRV statistics.
+        EKG.hrv_stats : Calculate all HRV statistics on IBI object.
         """
         # resample & interpolate tachogram
         print('Interpolating and resampling tachogram...')
