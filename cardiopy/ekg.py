@@ -799,8 +799,10 @@ class EKG:
         bands : 
 
             TO DO: add option to change bands
-            Note: modified from pyHRV
-            * normalized units are normalized to total lf + hf power, according to Heathers et al. (2014)
+        Notes
+        -----
+        Modified from pyHRV
+        Normalized units are normalized to total lf + hf power, according to Heathers et al. (2014)
         """
         if method is None:
             method = input('Please enter PSD method (options: "welch", "mt"): ')
