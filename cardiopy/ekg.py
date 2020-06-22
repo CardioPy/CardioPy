@@ -731,12 +731,13 @@ class EKG:
 
     def calc_psd_welch(self, itype, window):
         """ 
-        Calculate welch power spectral density.
+        Calculate welch power spectrum.
 
         Parameters
         ----------
-        itype : str {'rr, 'nn'}
-            Interval type.'rr' is uncleaned data. 'nn' is normal intervals (cleaned).
+        itype : str {'rr', 'nn'}
+            Interval type with which to calculate the power spectrum.
+            'rr' is uncleaned data. 'nn' is normal intervals (cleaned).
         window : str
             Windowing function. Options from scipy.signal welch. (wrapper default: 'hamming')
         """
