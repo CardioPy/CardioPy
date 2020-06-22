@@ -877,7 +877,7 @@ class EKG:
         See Also
         --------
         EKG.calc_tstats : Calculate commonly used time domain HRV statistics.
-        EKG.hrv_stats : Calculate all HRV statistics on IBI object.
+        EKG.hrv_stats : Calculate both time and frequency domain HRV statistics on IBI object.
         """
         # resample & interpolate tachogram
         print('Interpolating and resampling tachogram...')
