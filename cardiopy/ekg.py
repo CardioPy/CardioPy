@@ -769,16 +769,19 @@ class EKG:
         Calculate multitaper power spectrum.
 
         Parameters
-        ------
+        ----------
         bandwidth: float
-            frequency resolution (NW)
+            Frequency resolution of power spectrum (NW).
 
         Returns
         -------
         psd_mt: dict
-            'freqs': ndarray
-            'psd': ndarray. power spectral density in (V^2/Hz). 10log10 to convert to dB.
+        'freqs': ndarray
+        'psd': ndarray. power spectral density in (V^2/Hz). 10log10 to convert to dB.
 
+        See Also
+        --------
+        EKG.calc_psd_welch : Calculate welch power spectrum.
         """
         self.metadata['analysis_info']['psd_method'] = 'multitaper'
         self.metadata['analysis_info']['psd_bandwidth'] = bandwidth
