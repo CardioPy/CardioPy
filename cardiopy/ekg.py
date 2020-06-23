@@ -1175,7 +1175,20 @@ class EKG:
 
     ## plotting methods ##
     def plotpeaks(self, rpeaks=True, ibi=True, thres = True):
-        """ plot EKG class instance """
+        """
+        Plot EKG class instance.
+
+        Visualization of raw EKG data, smoothed EKG data, R peaks, IBI length and EKG threshold detection line.
+        
+        Parameters
+        ----------
+        rpeaks : bool, default True
+            Shows r peaks on plot if set to True.
+        ibi : bool, default True
+            Displays plot with IBI time leading up to each r peak if set to True
+        thres : bool, default True
+            Shows threshold line if set to True.
+        """
         # set number of panels
         if ibi == True:
             plots = ['ekg', 'ibi']
