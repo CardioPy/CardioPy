@@ -1,4 +1,8 @@
-""" This file contains the EKG class .
+""" This file contains methods to visualize EKG data, clean EKG data and run EKG analyses.
+
+    Classes
+    -------
+    EKG
 
     All R peak detections should be manually inspected with EKG.plotpeaks method and
     false detections manually removed with rm_peaks method. After rpeak examination, 
@@ -36,46 +40,61 @@ from pandas.plotting import register_matplotlib_converters
 from scipy.signal import welch
 
 class EKG:
-    """ General class containing EKG analyses
-    
-    Parameters
-    ----------
-    df: pd.DataFrame
-        Dataframe containing 'EKG' column data. First two rows are headers [Channel, Datatype]
+    """ Run EKG analyses including cleaning and visualizing data.
     
     Attributes
     ----------
+    metadata : nested dict
+        File information and analysis information.
+    data : pd.DataFrame
+        Raw data of the EKG signal (mV) and the threshold line (mV) at each sampled time point.
+    rpeak_artifacts : pd.Series
+        False R peak detections that have been removed.
+    rpeaks_added : pd.Series
+        R peak detections that have been added.
+    ibi_artifacts : pd.Series
+        Interbeat interval data that has been removed.
+    rpeaks : pd.Series
+        Cleaned R peaks data without removed peaks and with added peaks.
+    rr : np.ndarray
+        Time between R peaks (ms).
+    nn : np.ndarray
+        Cleaned time between R peaks (ms) without removed interbeat interval data.
+    rpeaks_df : pd.DataFrame
+        Raw EKG value (mV) and corresponding interbeat interval leading up to the data point (ms) at each sampled point.
     """
 
-    def __init__(self, fname, fpath, min_dur=True, epoched=True, smooth=False, sm_wn=30, mw_size=100, upshift=3.5, rm_artifacts=False, detect_peaks=True):
+    def __init__(self, fname, fpath, min_dur=True, epoched=True, smooth=False, sm_wn=30, mw_size=100, upshift=3.5, detect_peaks=True):
         """ Initialize raw EKG object
 
         Parameters
         ----------
-        fname: str
-            filename
-        fpath: str
-            path to file
-        min_dur: bool (default:True)
-            only load files that are >= 5 minutes long
-        epoched: bool (default: True)
-            Whether file was epoched using ioeeg
-        smooth: BOOL (default: False)
+        fname : str
+            Filename.
+        fpath : str
+            Path to file.
+        min_dur : bool, default True
+            Only load files that are >= 5 minutes long.
+        epoched : bool, default True
+            Whether file was epoched using ioeeg.
+        smooth : bool, default False
             Whether raw signal should be smoothed before peak detections. Set True if raw data has consistent high frequency noise
-            preventing accurate peak detection
-        sm_wn: float (default: 30)
-            Size of moving window for rms smoothing preprocessing (milliseconds)
-        mw_size: float (default: 100)
-            Moving window size for R peak detection (milliseconds)
-        upshift: float (default: 3.5)
-            Detection threshold upshift for R peak detection (% of signal)
-        rm_artifacts: bool (default: False)
-            Apply IBI artifact removal algorithm
+            preventing accurate peak detection.
+        sm_wn : float, default 30
+            Size of moving window for rms smoothing preprocessing (milliseconds).
+        mw_size : float, default 100
+            Moving window size for R peak detection (milliseconds).
+        upshift : float, default 3.5
+            Detection threshold upshift for R peak detection (% of signal).
+        rm_artifacts : bool, default False
+            Apply IBI artifact removal algorithm.
+        detect_peaks : bool, default True
+            Option to detect R peaks and calculate interbeat intervals.
 
         Returns
         -------
-        EKG object w/ R peak detections and calculated inter-beat intervals
-         """
+        EKG object. Includes R peak detections and calculated inter-beat intervals if detect_peaks is set to True.
+        """
 
         # set metadata
         filepath = os.path.join(fpath, fname)
@@ -105,7 +124,7 @@ class EKG:
         # detect R peaks
         if detect_peaks == True:
             # detect R peaks & calculate inter-beat intevals
-            self.calc_RR(smooth, mw_size, upshift, rm_artifacts)
+            self.calc_RR(smooth, mw_size, upshift)
 
         register_matplotlib_converters()
         
@@ -551,16 +570,13 @@ class EKG:
                 print('R peaks dataframe updated.\nDone.')
 
 
-    def calc_RR(self, smooth, mw_size, upshift, rm_artifacts):
+    def calc_RR(self, smooth, mw_size, upshift):
         """ Detect R peaks and calculate R-R intervals """
         
         # set R peak detection parameters
         self.set_Rthres(smooth, mw_size, upshift)
         # detect R peaks & make RR tachogram
         self.detect_Rpeaks(smooth)
-        # remove artifacts
-        if rm_artifacts == True:
-            self.rm_artifacts()
 
     def export_RR(self, savedir):
         """ Export R peaks and RR interval data to .txt files """
