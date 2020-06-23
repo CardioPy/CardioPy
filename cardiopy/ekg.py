@@ -47,7 +47,7 @@ class EKG:
     ----------
     """
 
-    def __init__(self, fname, fpath, min_dur=True, epoched=True, smooth=False, sm_wn=30, mw_size=100, upshift=3.5, rm_artifacts=False, detect_peaks=True):
+    def __init__(self, fname, fpath, min_dur=True, epoched=True, smooth=False, sm_wn=30, mw_size=100, upshift=3.5, detect_peaks=True):
         """ Initialize raw EKG object
 
         Parameters
@@ -69,8 +69,6 @@ class EKG:
             Moving window size for R peak detection (milliseconds)
         upshift: float (default: 3.5)
             Detection threshold upshift for R peak detection (% of signal)
-        rm_artifacts: bool (default: False)
-            Apply IBI artifact removal algorithm
 
         Returns
         -------
@@ -105,7 +103,7 @@ class EKG:
         # detect R peaks
         if detect_peaks == True:
             # detect R peaks & calculate inter-beat intevals
-            self.calc_RR(smooth, mw_size, upshift, rm_artifacts)
+            self.calc_RR(smooth, mw_size, upshift)
 
         register_matplotlib_converters()
         
@@ -550,16 +548,13 @@ class EKG:
                 print('R peaks dataframe updated.\nDone.')
 
 
-    def calc_RR(self, smooth, mw_size, upshift, rm_artifacts):
+    def calc_RR(self, smooth, mw_size, upshift):
         """ Detect R peaks and calculate R-R intervals """
         
         # set R peak detection parameters
         self.set_Rthres(smooth, mw_size, upshift)
         # detect R peaks & make RR tachogram
         self.detect_Rpeaks(smooth)
-        # remove artifacts
-        if rm_artifacts == True:
-            self.rm_artifacts()
 
     def export_RR(self, savedir):
         """ Export R peaks and RR interval data to .txt files """
