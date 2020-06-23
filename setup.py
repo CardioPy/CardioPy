@@ -15,7 +15,7 @@ setuptools.setup(
 	packages = setuptools.find_packages(),
 	classifiers = [
 		"Programming Language :: Python :: 3",
-		"License :: OSI Approved :: TBD",
+		"License :: OSI Approved :: MIT License",
 		"Operating System :: OS Indepedent",
 		"Intended Audience :: Healthcare Researchers",
 		"Topic :: Healthcare :: Heart Rate Variability"
