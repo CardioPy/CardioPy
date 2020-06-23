@@ -44,24 +44,24 @@ class EKG:
     
     Attributes
     ----------
-    metadata : dict of {str: str: str}
+    metadata : nested dict
         File information and analysis information.
-    data : DataFrame
-        Raw data of the EKG signal (V) and the threshold line (V) at each sampled time point.
-    rpeak_artifacts : Series
+    data : pd.DataFrame
+        Raw data of the EKG signal (mV) and the threshold line (mV) at each sampled time point.
+    rpeak_artifacts : pd.Series
         False R peak detections that have been removed.
-    rpeaks_added : Series
+    rpeaks_added : pd.Series
         R peak detections that have been added.
     ibi_artifacts : pd.Series
         Interbeat interval data that has been removed.
-    rpeaks : Series
+    rpeaks : pd.Series
         Cleaned R peaks data without removed peaks and with added peaks.
     rr : np.ndarray
         Time between R peaks (ms).
     nn : np.ndarray
         Cleaned time between R peaks (ms) without removed interbeat interval data.
-    rpeaks_df : DataFrame
-        Raw EKG value (V) and corresponding interbeat interval leading up to the data point (ms) at each sampled point.
+    rpeaks_df : pd.DataFrame
+        Raw EKG value (mV) and corresponding interbeat interval leading up to the data point (ms) at each sampled point.
     """
 
     def __init__(self, fname, fpath, min_dur=True, epoched=True, smooth=False, sm_wn=30, mw_size=100, upshift=3.5, rm_artifacts=False, detect_peaks=True):
