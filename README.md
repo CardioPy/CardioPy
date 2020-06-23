@@ -29,3 +29,24 @@ __3. HRV analysis methods__<br>
 __4. HRV statistics export__<br>
    * Single-file report exports in json format<br>
    * Multi-file exports into .csv spreadsheets for group statistics<br>
+
+## Usage
+Best when run with jupyter notebook. For detailed instructions see (will insert how to get to the example jupyter notebook file). (Section to be expanded as I see what can/can't be shown with the notebook file) 
+
+## Installation
+(Will edit once run it myself to insure details are clear step by step)
+
+Use the package manager [pip](https://pip.pypa.io/en/stable/) to install CardioPy.
+
+```bash
+pip install CardioPy
+```
+
+## Contributing
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+
+## License
+TBD
+
+## Roadmap
+The authors plan for the next version of CardioPy to include automatic parameter detection. This would include upshift, moving window and smoothing window suggestions for optimal peak detection.

@@ -1,4 +1,8 @@
-""" This file contains the EKG class .
+""" This file contains methods to visualize EKG data, clean EKG data and run EKG analyses.
+
+    Classes
+    -------
+    EKG
 
     All R peak detections should be manually inspected with EKG.plotpeaks method and
     false detections manually removed with rm_peaks method. After rpeak examination, 
@@ -36,46 +40,61 @@ from pandas.plotting import register_matplotlib_converters
 from scipy.signal import welch
 
 class EKG:
-    """ General class containing EKG analyses
-    
-    Parameters
-    ----------
-    df: pd.DataFrame
-        Dataframe containing 'EKG' column data. First two rows are headers [Channel, Datatype]
+    """ Run EKG analyses including cleaning and visualizing data.
     
     Attributes
     ----------
+    metadata : nested dict
+        File information and analysis information.
+    data : pd.DataFrame
+        Raw data of the EKG signal (mV) and the threshold line (mV) at each sampled time point.
+    rpeak_artifacts : pd.Series
+        False R peak detections that have been removed.
+    rpeaks_added : pd.Series
+        R peak detections that have been added.
+    ibi_artifacts : pd.Series
+        Interbeat interval data that has been removed.
+    rpeaks : pd.Series
+        Cleaned R peaks data without removed peaks and with added peaks.
+    rr : np.ndarray
+        Time between R peaks (ms).
+    nn : np.ndarray
+        Cleaned time between R peaks (ms) without removed interbeat interval data.
+    rpeaks_df : pd.DataFrame
+        Raw EKG value (mV) and corresponding interbeat interval leading up to the data point (ms) at each sampled point.
     """
 
-    def __init__(self, fname, fpath, min_dur=True, epoched=True, smooth=False, sm_wn=30, mw_size=100, upshift=3.5, rm_artifacts=False, detect_peaks=True):
+    def __init__(self, fname, fpath, min_dur=True, epoched=True, smooth=False, sm_wn=30, mw_size=100, upshift=3.5, detect_peaks=True):
         """ Initialize raw EKG object
 
         Parameters
         ----------
-        fname: str
-            filename
-        fpath: str
-            path to file
-        min_dur: bool (default:True)
-            only load files that are >= 5 minutes long
-        epoched: bool (default: True)
-            Whether file was epoched using ioeeg
-        smooth: BOOL (default: False)
+        fname : str
+            Filename.
+        fpath : str
+            Path to file.
+        min_dur : bool, default True
+            Only load files that are >= 5 minutes long.
+        epoched : bool, default True
+            Whether file was epoched using ioeeg.
+        smooth : bool, default False
             Whether raw signal should be smoothed before peak detections. Set True if raw data has consistent high frequency noise
-            preventing accurate peak detection
-        sm_wn: float (default: 30)
-            Size of moving window for rms smoothing preprocessing (milliseconds)
-        mw_size: float (default: 100)
-            Moving window size for R peak detection (milliseconds)
-        upshift: float (default: 3.5)
-            Detection threshold upshift for R peak detection (% of signal)
-        rm_artifacts: bool (default: False)
-            Apply IBI artifact removal algorithm
+            preventing accurate peak detection.
+        sm_wn : float, default 30
+            Size of moving window for rms smoothing preprocessing (milliseconds).
+        mw_size : float, default 100
+            Moving window size for R peak detection (milliseconds).
+        upshift : float, default 3.5
+            Detection threshold upshift for R peak detection (% of signal).
+        rm_artifacts : bool, default False
+            Apply IBI artifact removal algorithm.
+        detect_peaks : bool, default True
+            Option to detect R peaks and calculate interbeat intervals.
 
         Returns
         -------
-        EKG object w/ R peak detections and calculated inter-beat intervals
-         """
+        EKG object. Includes R peak detections and calculated inter-beat intervals if detect_peaks is set to True.
+        """
 
         # set metadata
         filepath = os.path.join(fpath, fname)
@@ -105,19 +124,19 @@ class EKG:
         # detect R peaks
         if detect_peaks == True:
             # detect R peaks & calculate inter-beat intevals
-            self.calc_RR(smooth, mw_size, upshift, rm_artifacts)
+            self.calc_RR(smooth, mw_size, upshift)
 
         register_matplotlib_converters()
         
         
     def load_ekg(self, min_dur):
         """ 
-        Load ekg data and extract sampling frequency. 
+        Load EKG data from csv file and extract metadata including sampling frequency, cycle length, start time and NaN data.
         
         Parameters
         ----------
-        min_dur: bool, default: True
-            If set to True, will not load files shorter than minimum duration in length 
+        min_dur : bool, default True
+            If set to True, will not load files shorter than the minimum duration length of 5 minutes.
         """
         
         data = pd.read_csv(self.metadata['file_info']['path'], header = [0, 1], index_col = 0, parse_dates=True)['EKG']
@@ -139,6 +158,7 @@ class EKG:
         s_freq = 1000000/diff[0].microseconds
         nans = len(data) - data['Raw'].count()
 
+        # Set metadata 
         self.metadata['file_info']['start_time'] = data.index[0]
         self.metadata['analysis_info'] = {'s_freq': s_freq, 'cycle_len_secs': cycle_len_secs, 
                                         'NaNs(samples)': nans, 'NaNs(secs)': nans/s_freq}
@@ -146,7 +166,16 @@ class EKG:
         print('EKG successfully imported.')
 
     def rms_smooth(self, sm_wn):
-        """ Smooth raw data with RMS moving window """
+        """ 
+        Smooth raw data with root mean square (RMS) moving window.
+
+        Reduce noise leading to false R peak detections.
+
+        Parameters
+        ----------
+        sm_wn : float, default 30
+            Size of moving window for RMS smoothing preprocessing (ms).
+        """
         self.metadata['analysis_info']['smooth'] = True
         self.metadata['analysis_info']['rms_smooth_wn'] = sm_wn
         
@@ -155,11 +184,28 @@ class EKG:
 
 
     def set_Rthres(self, smooth, mw_size, upshift):
-        """ set R peak detection threshold based on moving average + %signal upshift """
+        """
+        Set R peak detection threshold based on moving average shifted up by a percentage of the EKG signal.
+        
+        Parameters
+        ----------
+        smooth : bool, default False
+            If set to True, raw EKG data will be smoothed using RMS smoothing window.
+        mw_size : float, default 100
+            Time over which the moving average of the EKG signal will be taken to calculate the R peak detection threshold (ms).
+        upshift : float, default 3.5
+            Percentage of EKG signal that the moving average will be shifted up by to set the R peak detection threshold.
+
+        See Also
+        --------
+        EKG.rms_smooth : Smooth raw EKG data with root mean square (RMS) moving window.
+
+        """
         print('Calculating moving average with {} ms window and a {}% upshift...'.format(mw_size, upshift))
         
         # convert moving window to sample & calc moving average over window
         mw = int((mw_size/1000)*self.metadata['analysis_info']['s_freq'])
+        #if smooth is true have the moving average calculated based off of smoothed data
         if smooth == False:
             mavg = self.data.Raw.rolling(mw).mean()
             ekg_avg = np.mean(self.data['Raw'])
@@ -170,12 +216,13 @@ class EKG:
         # replace edge nans with overall average
         mavg = mavg.fillna(ekg_avg)
 
-        # set detection threshold as +5% of moving average
+        # set detection threshold as +upshift% of moving average
         upshift_mult = 1 + upshift/100
         det_thres = mavg*upshift_mult
         # insert threshold column at consistent position in df to ensure same color for plotting regardless of smoothing
         self.data.insert(1, 'EKG_thres', det_thres) # can remove this for speed, just keep as series
 
+        #set metadata
         self.metadata['analysis_info']['mw_size'] = mw_size
         self.metadata['analysis_info']['upshift'] = upshift
 
@@ -185,18 +232,30 @@ class EKG:
         self.ibi_artifacts = pd.Series()
 
     def detect_Rpeaks(self, smooth):
-        """ detect R peaks from raw signal """
-        print('Detecting R peaks...')
+        """ 
+        Detect R peaks of raw or smoothed EKG signal based on detection threshold. 
+        Parameters
+        ----------
+        smooth : bool, default False
+        If set to True, raw EKG data is smoothed using a RMS smoothing window.
 
+        See Also
+        --------
+        EKG.rms_smooth : Smooth raw EKG data with root mean square (RMS) moving window
+        EKG.set_Rthres : Set R peak detection threshold based on moving average shifted up by a percentage of the EKG signal.
+        """
+        print('Detecting R peaks...')
+        #Use the raw data or smoothed data depending on bool smooth
         if smooth == False:
             raw = pd.Series(self.data['Raw'])
         elif smooth == True:
             raw = pd.Series(self.data['raw_smooth'])
         
         thres = pd.Series(self.data['EKG_thres'])
-        
+        #create empty peaks list
         peaks = []
         x = 0
+        #Within the length of the data if the value of raw data (could be smoothed raw data) is less than ekg threshold keep counting forwards
         while x < len(raw):
             if raw[x] > thres[x]:
                 roi_start = x
@@ -479,14 +538,23 @@ class EKG:
         self.nn = self.rr    
 
     def rm_ibi(self, thres = 3000):
-        """ Manually remove IBI's corresponding to missing data (due to cleaning) or missed beats that can't be
-            manually added with ekg.add_peak() method
-            NOTE: This step must be completed LAST, after removing any false peaks and adding any missed peaks
+        """
+        Manually remove IBI's that can't be manually added with EKG.add_peak() method.
         
-            Parameters
-            ----------
-            thres: int
-                threshold in milliseconds for automatic IBI removal
+        IBIs to be removed could correspond to missing data (due to cleaning) or missed beats.
+
+        Parameters
+        ----------
+        thres: int, default 3000
+            Threshold time for automatic IBI removal (ms).
+
+        Notes
+        -----
+        This step must be completed LAST, after removing any false peaks and adding any missed peaks.
+
+        See Also
+        --------
+        EKG.add_peak : Manually add missed R peaks. 
         """
         
         # check for extra-long IBIs & option to auto-remove
@@ -573,9 +641,6 @@ class EKG:
         self.set_Rthres(smooth, mw_size, upshift)
         # detect R peaks & make RR tachogram
         self.detect_Rpeaks(smooth)
-        # remove artifacts
-        if rm_artifacts == True:
-            self.rm_artifacts()
 
     def export_RR(self, savedir):
         """ Export R peaks and RR interval data to .txt files """
