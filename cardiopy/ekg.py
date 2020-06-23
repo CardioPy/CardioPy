@@ -131,12 +131,12 @@ class EKG:
         
     def load_ekg(self, min_dur):
         """ 
-        Load EKG data and extract sampling frequency. 
+        Load EKG data from csv file and extract metadata including sampling frequency, cycle length, start time and NaN data.
         
         Parameters
         ----------
-        min_dur: bool, default: True
-            If set to True, will not load files shorter than minimum duration in length 
+        min_dur : bool, default True
+            If set to True, will not load files shorter than the minimum duration length of 5 minutes.
         """
         
         data = pd.read_csv(self.metadata['file_info']['path'], header = [0, 1], index_col = 0, parse_dates=True)['EKG']
@@ -158,6 +158,7 @@ class EKG:
         s_freq = 1000000/diff[0].microseconds
         nans = len(data) - data['Raw'].count()
 
+        # Set metadata 
         self.metadata['file_info']['start_time'] = data.index[0]
         self.metadata['analysis_info'] = {'s_freq': s_freq, 'cycle_len_secs': cycle_len_secs, 
                                         'NaNs(samples)': nans, 'NaNs(secs)': nans/s_freq}
