@@ -618,8 +618,24 @@ class EKG:
                 print('R peaks dataframe updated.\nDone.')
 
 
-    def calc_RR(self, smooth, mw_size, upshift):
-        """ Detect R peaks and calculate R-R intervals """
+    def calc_RR(self, smooth, mw_size, upshift, rm_artifacts):
+        """
+        Set R peak detection threshold, detect R peaks and calculate R-R intervals.
+
+        Parameters
+        ----------
+        smooth : bool, default True
+            If set to True, raw EKG data will be smoothed using RMS smoothing window.
+        mw_size : float, default 100
+            Time over which the moving average of the EKG signal will be taken to calculate the R peak detection threshold (ms).
+        upshift : float, default 3.5
+            Percentage of EKG signal that the moving average will be shifted up by to set the R peak detection threshold.
+
+        See Also
+        --------
+        EKG.set_Rthres : Set R peak detection threshold based on moving average shifted up by a percentage of the EKG signal.
+        EKG.detect_Rpeaks :  Detect R peaks of raw or smoothed EKG signal based on detection threshold. 
+        """
         
         # set R peak detection parameters
         self.set_Rthres(smooth, mw_size, upshift)
