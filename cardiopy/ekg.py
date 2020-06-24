@@ -961,7 +961,6 @@ class EKG:
     def to_report(self, savedir=None, fmt='txt'):
         """ 
         Export HRV statistics as a csv report.
-            TO DO: add line to check if nn exists
 
         Parameters
         ----------
