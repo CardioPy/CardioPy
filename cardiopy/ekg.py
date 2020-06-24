@@ -425,10 +425,14 @@ class EKG:
         ----------
         time : str {'hh:mm:ss'}
             Second of incorrectly removed R peak.
-            
-        Returns
+   
+        Modifies
         -------
-        Modified self.rpeaks, self.rpeaks_df, self.rr, self.nn, and self.rpeaks_added attributes
+        self.rpeaks : Incorrectly added R peaks removed.
+        self.rpeaks_df : Incorrectly added R peaks removed.
+        self.rr : IBI values recalculated to reflect change in R peaks.
+        self.nn : IBI values recalculated to reflect change in R peaks.
+        self.rpeaks_added : Incorrectly added R peaks removed from attribute.
 
         Notes
         -----
