@@ -242,12 +242,13 @@ class EKG:
         Parameters
         ----------
         time: str {'hh:mm:ss'}
-        Time in the format specified dictating the second containing the peak of interest.
+            Time in the format specified dictating the second containing the peak of interest.
         
-        Returns
+        Modifies
         -------
-        Modified self.rpeaks and self.rpeaks_df attributes. Removed peaks added to 
-        self.rpeak_artifacts attribute.
+        self.rpeaks : peaks that have been removed are removed
+        self.rpeaks_df : peaks that have been removed are removed
+        self.rpeak_artifacts : removed peaks added
         """
         
         # print all rpeaks in the second of interest
