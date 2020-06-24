@@ -1112,7 +1112,7 @@ class EKG:
 
     def plotPS(self, method='mt', dB=False, bands=True, save=True, savedir=None):
         """
-        Plot power spectrum with method of choice.
+        Plot power spectrum with method of choice and save if appropriate. 
 
         Parameters
         ----------
@@ -1124,7 +1124,7 @@ class EKG:
         bands : bool, default True
             If True, spectrum ploted colored by frequency band.
         save : bool, default True
-            If True, 
+            If True, power spectrum will be saved as well as plotted.
         savedir : str, optional
             Path to directory where spectrum is to be saved. 
 
@@ -1193,7 +1193,7 @@ class EKG:
         plt.ylabel(ylabel)
         plt.suptitle(title)
 
-        if save:
+        if save == True:
             if savedir is None:
                 print('ERROR: File not saved. Please specify savedir argument.')
             else:
