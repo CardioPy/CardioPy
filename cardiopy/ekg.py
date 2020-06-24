@@ -246,9 +246,9 @@ class EKG:
         
         Modifies
         -------
-        self.rpeaks : peaks that have been removed are removed
-        self.rpeaks_df : peaks that have been removed are removed
-        self.rpeak_artifacts : removed peaks added
+        self.rpeaks : Peaks that have been removed are removed from attribute.
+        self.rpeaks_df : Peaks that have been removed are removed from attribute.
+        self.rpeak_artifacts : Removed peaks added to attribute.
         """
         
         # print all rpeaks in the second of interest
