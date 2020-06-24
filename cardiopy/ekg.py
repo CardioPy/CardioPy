@@ -46,6 +46,7 @@ class EKG:
     ----------
     metadata : nested dict
         File information and analysis information.
+        Format {str:{str:val}} with val being str, bool, float, int or pd.Timestamp.
     data : pd.DataFrame
         Raw data of the EKG signal (mV) and the threshold line (mV) at each sampled time point.
     rpeak_artifacts : pd.Series
