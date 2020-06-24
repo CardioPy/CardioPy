@@ -618,7 +618,7 @@ class EKG:
                 print('R peaks dataframe updated.\nDone.')
 
 
-    def calc_RR(self, smooth, mw_size, upshift, rm_artifacts):
+    def calc_RR(self, smooth, mw_size, upshift):
         """
         Set R peak detection threshold, detect R peaks and calculate R-R intervals.
 
