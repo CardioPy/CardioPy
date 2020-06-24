@@ -504,17 +504,31 @@ class EKG:
         self.nn = self.rr
 
     def undo_add_peak(self, time):
-        """ remove an incorrect peak from add_peaks() method
-            NOTE: This is strictly an "undo" method. It is NOT equivalent to rm_peaks().
-            
-            Parameters
-            ----------
-            time: str (format 'hh:mm:ss')
-                second of incorrectly added peak
-            
-            Returns
-            -------
-            Modified self.rpeaks, self.rpeaks_df, self.rr, self.nn, and self.rpeaks_added attributes
+        """
+        Manually remove incorrectly added peaks from EKG.add_peak method.
+
+        Parameters
+        ----------
+        time : str {'hh:mm:ss'}
+            Second of incorrectly removed R peak.
+   
+        Modifies
+        -------
+        self.rpeaks : Incorrectly added R peaks removed.
+        self.rpeaks_df : Incorrectly added R peaks removed.
+        self.rr : IBI values recalculated to reflect change in R peaks.
+        self.nn : IBI values recalculated to reflect change in R peaks.
+        self.rpeaks_added : Incorrectly added R peaks removed from attribute.
+
+        Notes
+        -----
+        This is strictly an "undo" method. It is NOT equivalent to rm_peaks().
+
+        See Also
+        --------
+        EKG.add_peak : Examine a second of interest and manually add missed R peaks.
+        EKG.rm_peaks : Examine a second of interest and manually remove artifact R peaks.
+        EKG.undo_rm_peaks : Manually add back incorrectly removed peaks from EKG.rm_peaks method. 
         """
         
         if len(self.rpeaks_added) == 0:
