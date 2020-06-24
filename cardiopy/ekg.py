@@ -1,28 +1,15 @@
-""" This file contains methods to visualize EKG data, clean EKG data and run EKG analyses.
+"""
+This file contains methods to visualize EKG data, clean EKG data and run EKG analyses.
 
-    Classes
-    -------
-    EKG
+Classes
+-------
+EKG
 
-    All R peak detections should be manually inspected with EKG.plotpeaks method and
-    false detections manually removed with rm_peaks method. After rpeak examination, 
-    NaN data can be accounted for by removing false IBIs with rm_ibi method.
-
-    TO DO:
-        ** Update docstrings **
-        1. Add option to extract sampling frequency & milliseconds from time column
-        2. Re-add code to import previously cleaned nn data -- DONE. 11-24-19 in hrv_stats method
-        3. Add range options for indices for rm peaks and rm ibis
-        4. Add more descriptive error message for ValueError encountered during
-            add_peaks if range is outside of data
-        5. Add option for auto-determining threshold parameters (mw_size and upshift)
-        6. Add threshold statistics (sensitivity & PPV) to output
-        7. Update hrv_stats to assume NN
-        8. Add nn attribute for data that doesn't require cleanings
-        9. Fix spreadsheet alignment when smoothing used (incorp smooth & sm_wn metadata to all files)
-        10. Option for 1000Hz interpolation prior to peak detection; Option for 4Hz resampling of NN tachogram
-            rather than original sampling frequencys
-
+Notes
+-----
+All R peak detections should be manually inspected with EKG.plotpeaks method and
+false detections manually removed with rm_peaks method. After rpeak examination, 
+NaN data can be accounted for by removing false IBIs with rm_ibi method.
 """
 
 import datetime
@@ -40,7 +27,8 @@ from pandas.plotting import register_matplotlib_converters
 from scipy.signal import welch
 
 class EKG:
-    """ Run EKG analyses including cleaning and visualizing data.
+    """
+    Run EKG analyses including cleaning and visualizing data.
     
     Attributes
     ----------
@@ -66,7 +54,8 @@ class EKG:
     """
 
     def __init__(self, fname, fpath, min_dur=True, epoched=True, smooth=False, sm_wn=30, mw_size=100, upshift=3.5, detect_peaks=True):
-        """ Initialize raw EKG object
+        """
+        Initialize raw EKG object.
 
         Parameters
         ----------
