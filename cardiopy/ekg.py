@@ -739,7 +739,9 @@ class EKG:
             Interval type with which to calculate the power spectrum.
             'rr' is uncleaned data. 'nn' is normal intervals (cleaned).
         window : str
-            Windowing function. Options from scipy.signal welch. (wrapper default: 'hamming')
+            Windowing function.
+            Options from scipy.signal welch
+            Wrapper default 'hamming'
 
         See Also
         --------
