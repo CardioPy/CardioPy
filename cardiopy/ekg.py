@@ -1411,7 +1411,7 @@ class EKG:
             if savedir is None:
                 print('ERROR: File not saved. Please specify savedir argument.')
             else:
-                savename = os.path.join(savedir, fname.split('.')[0]) + '_psd.png'
+                savename = os.path.join(savedir, self.metadata['file_info']['fname'].split('.')[0]) + '_psd.png'
                 fig.savefig(savename, dpi=300)
 
         return fig
