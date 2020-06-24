@@ -309,11 +309,11 @@ class EKG:
 
         Modifies
         -------
-        self.rpeaks : incorrectly removed R peaks added back
-        self.rpeaks_df : incorrectly removed R peaks added back
-        self.rr : IBI values recalculated to reflect change in R peaks
-        self.nn : IBI values recalculated to reflect change in R peaks
-        self.rpeaks_artifacts : incorrectly removed R peaks removed from attribute
+        self.rpeaks : Incorrectly removed R peaks added back.
+        self.rpeaks_df : Incorrectly removed R peaks added back.
+        self.rr : IBI values recalculated to reflect change in R peaks.
+        self.nn : IBI values recalculated to reflect change in R peaks.
+        self.rpeaks_artifacts : Incorrectly removed R peaks removed from attribute.
 
         See Also
         --------
