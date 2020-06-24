@@ -855,7 +855,7 @@ class EKG:
         self.freq_stats = freq_stats
 
 
-    def calc_fstats(self, itype, method, bandwidth, window, bands=None):
+    def calc_fstats(self, itype, method, bandwidth, window):
         """
         Calculate commonly used frequency domain HRV statistics.
 
@@ -871,8 +871,6 @@ class EKG:
             Bandwidth for multitaper power spectral estimation.
         window : str
             Window to use for welch FFT. See mne.time_frequency.psd_array_multitaper for options.
-        bands : ?
-            Frequency bands of interest. To do: update for custom bands
 
         See Also
         --------
@@ -892,7 +890,7 @@ class EKG:
         
         #calculate frequency domain statistics
         print('Calculating frequency domain measures...')
-        self.calc_fbands(method, bands)
+        self.calc_fbands(method)
         print('Frequency measures stored in obj.freq_stats\n')
 
 
