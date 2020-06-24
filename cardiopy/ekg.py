@@ -1072,15 +1072,24 @@ class EKG:
 
 
     def hrv_stats(self, itype='nn', nn_file=None, method='mt', bandwidth=0.01, window='hamming'):
-        """ Calculate all statistics on IBI object 
+        """
+        Calculate both time and frequency domain HRV statistics on IBI object.
 
-            TO DO: Add freq_stats arguments to hrv_stats params? 
-
-            Parameters
-            ----------
-            nn_file: str
-                path to csv file containing cleaned nn values, if nn values were
-                previously exported
+        Parameters
+        ----------
+        itype : str {'nn', 'rr'}
+            Interbeat interval object type to use for calculations. 
+            'rr' is uncleaned data. 'nn' is normal intervals (cleaned)
+        nn_file : str, optional
+            Path to csv file containing cleaned nn values, if nn values were previously exported.
+        method : str, {'mt', 'welch'}
+            Method to use when calculating power spectrum. 
+            'mt' is multitaper
+        bandwidth : float, default 0.01
+            Bandwidth used when calculating frequency domain statistics.
+        window : str , default 'hamming'
+            Window type used for welch power spectral analysis.
+            Options from scipy.signal welch.
         """
 
         self.metadata['analysis_info']['itype'] = itype
