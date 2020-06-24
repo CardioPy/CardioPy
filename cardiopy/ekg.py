@@ -1158,11 +1158,23 @@ class EKG:
             print('{} does not exist. Data saved to new spreadsheet'.format(spreadsheet))
 
     def to_report(self, savedir=None, fmt='txt'):
-        """ export statistics as a csv report 
-            TO DO: add line to check if nn exists
+        """ 
+        Export HRV statistics as a csv report.
 
-            fmt: str (default: 'txt')
-                output format (options: 'txt', 'json')
+        Parameters
+        ----------
+        savedir : str, optional
+            Path to directory in which to save report.
+        fmt: str, {'txt', 'json'}
+            Output format.
+
+        See Also
+        --------
+        EKG.hrv_stats : Calculate both time and frequency domain HRV statistics on IBI object.
+        EKG.calc_fstats : Calculate commonly used frequency domain HRV statistics.
+        EKG.calc_tstats : Calculate commonly used time domain HRV statistics.
+        EKG.calc_psd_welch : Calculate welch power spectrum.
+        EKG.calc_psd_mt : Calculate multitaper power spectrum.
         """
         # set save directory
         if savedir is None:
