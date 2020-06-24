@@ -1173,7 +1173,7 @@ class EKG:
             psd_mt_df.to_csv(psdfile, index=False)
 
 
-    ## plotting methods ##
+    # plotting methods
     def plotpeaks(self, rpeaks=True, ibi=True, thres = True):
         """
         Plot EKG class instance.
@@ -1252,9 +1252,30 @@ class EKG:
 
 
     def plotPS(self, method='mt', dB=False, bands=True, save=True, savedir=None):
-        """ Plot power spectrum """
+        """
+        Plot power spectrum with method of choice and save if appropriate. 
+
+        Parameters
+        ----------
+        method : str, {'mt', 'welch'}
+            Method by which power spectrum is to be calculated.
+            'mt' is multitaper.
+        dB : bool, default False
+            If True, decibals used as unit for power spectral density instead of s^2/Hz
+        bands : bool, default True
+            If True, spectrum plotted colored by frequency band.
+        save : bool, default True
+            If True, power spectrum will be saved as well as plotted.
+        savedir : str, optional
+            Path to directory where spectrum is to be saved. 
+
+        See Also
+        --------
+        EKG.calc_psd_mt : Calculate multitaper power spectrum.
+        EKG.calc_psd_welch : Calculate welch power spectrum. 
+        """
         
-         # set title
+        # set title
         title = self.metadata['file_info']['in_num'] + ' ' + self.metadata['file_info']['start_date'] + '\n' + self.metadata['file_info']['sleep_stage'] + ' ' + self.metadata['file_info']['cycle']
         try:
             n.metadata['file_info']['epoch']
@@ -1313,7 +1334,7 @@ class EKG:
         plt.ylabel(ylabel)
         plt.suptitle(title)
 
-        if save:
+        if save == True:
             if savedir is None:
                 print('ERROR: File not saved. Please specify savedir argument.')
             else:
