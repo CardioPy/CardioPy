@@ -34,6 +34,7 @@ class EKG:
     ----------
     metadata : nested dict
         File information and analysis information.
+        Format {str:{str:val}} with val being str, bool, float, int or pd.Timestamp.
     data : pd.DataFrame
         Raw data of the EKG signal (mV) and the threshold line (mV) at each sampled time point.
     rpeak_artifacts : pd.Series
@@ -285,16 +286,18 @@ class EKG:
 
     def rm_peaks(self, time):
         """ 
-        Examine a second of interest and manually remove artifact peaks.
+        Examine a second of interest and manually remove artifact R peaks.
         
         Parameters
         ----------
-        time: str format 'hh:mm:ss'
+        time: str {'hh:mm:ss'}
+            Time in the format specified dictating the second containing the peak of interest.
         
-        Returns
+        Modifies
         -------
-        Modified self.rpeaks and self.rpeaks_df attributes. Removed peaks added to 
-        self.rpeak_artifacts attribute.
+        self.rpeaks : Peaks that have been removed are removed from attribute.
+        self.rpeaks_df : Peaks that have been removed are removed from attribute.
+        self.rpeak_artifacts : Removed peaks added to attribute.
         """
         
         # print all rpeaks in the second of interest
@@ -343,17 +346,31 @@ class EKG:
 
 
     def undo_rm_peaks(self, time):
-        """ add back incorrectly removed peaks from rm_peaks() method
-            NOTE: This is strictly an "undo" method. It is NOT equivalent to add_peaks().
+        """
+        Manually add back incorrectly removed peaks from EKG.rm_peaks method.
             
-            Parameters
-            ----------
-            time: str (format 'hh:mm:ss')
-                second of incorrectly removed peak
-            
-            Returns
-            -------
-            Modified self.rpeaks, self.rpeaks_df, self.rr, self.nn, and self.rpeaks_artifacts attributes
+        Parameters
+        ----------
+        time : str {'hh:mm:ss'}
+            Second of incorrectly removed R peak.
+
+        Notes
+        -----
+        This is strictly an "undo" method. It is NOT equivalent to add_peaks().
+
+        Modifies
+        -------
+        self.rpeaks : Incorrectly removed R peaks added back.
+        self.rpeaks_df : Incorrectly removed R peaks added back.
+        self.rr : IBI values recalculated to reflect change in R peaks.
+        self.nn : IBI values recalculated to reflect change in R peaks.
+        self.rpeaks_artifacts : Incorrectly removed R peaks removed from attribute.
+
+        See Also
+        --------
+        EKG.rm_peaks : Examine a second of interest and manually remove artifact R peaks.
+        EKG.add_peak : Examine a second of interest and manually add missed R peaks.
+        EKG.undo_add_peak : Manually remove incorrectly added peaks from EKG.add_peak method.
         """
         
         if len(self.rpeak_artifacts) == 0:
@@ -408,16 +425,27 @@ class EKG:
         self.nn = self.rr    
 
     def add_peak(self, time):
-        """ manually add missed peaks 
+        """
+        Examine a second of interest and manually add missed R peaks.
 
         Parameters
         ----------
-        time: str format 'hh:mm:ss'
-        
-        Returns
+        time : str {'hh:mm:ss'}
+            Second within which peak is to be added.
+
+        Modifies
         -------
-        Modified self.rpeaks, self.rpeaks_df, self.rr, and self.nn attributes. Added peaks stored in 
-        self.rpeaks_added attribute.
+        self.rpeaks : Added peaks added to attribute.
+        self.rpeaks_df : Added peaks added to attribute.
+        self.rr : IBI values recalculate to reflect changed R peaks.
+        self.nn : IBI values recalculate to reflect changed R peaks.
+        self.rpeaks_added : Added peaks stored.
+
+        See Also
+        --------
+        EKG.undo_add_peak : Manually add back incorrectly added R peaks from EKG.add_peak method.
+        EKG.rm_peaks : Examine a second of interest and manually remove artifact R peak.
+        EKG.undo_rm_peak : Manually add back incorrectly removed R peaks from EKG.rm_peaks method.
         """
         
         # specify time range of missed peak
@@ -466,17 +494,31 @@ class EKG:
         self.nn = self.rr
 
     def undo_add_peak(self, time):
-        """ remove an incorrect peak from add_peaks() method
-            NOTE: This is strictly an "undo" method. It is NOT equivalent to rm_peaks().
-            
-            Parameters
-            ----------
-            time: str (format 'hh:mm:ss')
-                second of incorrectly added peak
-            
-            Returns
-            -------
-            Modified self.rpeaks, self.rpeaks_df, self.rr, self.nn, and self.rpeaks_added attributes
+        """
+        Manually remove incorrectly added peaks from EKG.add_peak method.
+
+        Parameters
+        ----------
+        time : str {'hh:mm:ss'}
+            Second of incorrectly removed R peak.
+   
+        Modifies
+        -------
+        self.rpeaks : Incorrectly added R peaks removed.
+        self.rpeaks_df : Incorrectly added R peaks removed.
+        self.rr : IBI values recalculated to reflect change in R peaks.
+        self.nn : IBI values recalculated to reflect change in R peaks.
+        self.rpeaks_added : Incorrectly added R peaks removed from attribute.
+
+        Notes
+        -----
+        This is strictly an "undo" method. It is NOT equivalent to rm_peaks().
+
+        See Also
+        --------
+        EKG.add_peak : Examine a second of interest and manually add missed R peaks.
+        EKG.rm_peaks : Examine a second of interest and manually remove artifact R peaks.
+        EKG.undo_rm_peaks : Manually add back incorrectly removed peaks from EKG.rm_peaks method. 
         """
         
         if len(self.rpeaks_added) == 0:
@@ -801,7 +843,7 @@ class EKG:
         print('Time domain stats stored in obj.time_stats\n')
 
     
-    def interpolateII(self, itype):
+    def interpolate_IBI(self, itype):
         """
         Resample tachogram to original sampling frequency and interpolate for power spectral estimation.
 
@@ -839,14 +881,22 @@ class EKG:
 
 
     def calc_psd_welch(self, itype, window):
-        """ Calculate welch power spectral density 
+        """ 
+        Calculate welch power spectrum.
 
-            Params
-            ------
-            itype: str
-                interval type (options: 'rr', 'nn')
-            window: str
-                windowing function. options from scipy.signal welch. (wrapper default: 'hamming')
+        Parameters
+        ----------
+        itype : str {'rr', 'nn'}
+            Interval type with which to calculate the power spectrum.
+            'rr' is uncleaned data. 'nn' is normal intervals (cleaned).
+        window : str
+            Windowing function.
+            Options from scipy.signal welch
+            Wrapper default 'hamming'
+
+        See Also
+        --------
+        EKG.calc_psd_mt : Calculate multitaper power spectrum.
         """
         
         self.metadata['analysis_info']['psd_method'] = 'welch'
@@ -897,11 +947,19 @@ class EKG:
         self.psd_mt = {'freqs': freqs, 'pwr': pwr}
         self.metadata['analysis_info']['psd_method'] = 'multitaper'
 
-    def calc_fbands(self, method, bands):
-        """ Calculate different frequency band measures 
-            TO DO: add option to change bands
-            Note: modified from pyHRV
-            * normalized units are normalized to total lf + hf power, according to Heathers et al. (2014)
+    def calc_fbands(self, method):
+        """
+        Calculate frequency band measures.
+
+        Parameters
+        ----------
+        method : str {'welch', 'mt'}
+            Method to be used to calculate frequency band measures.
+ 
+        Notes
+        -----
+        Modified from pyHRV
+        Normalized units are normalized to total lf + hf power, according to Heathers et al. (2014)
         """
         if method is None:
             method = input('Please enter PSD method (options: "welch", "mt"): ')
@@ -911,13 +969,12 @@ class EKG:
             psd = self.psd_mt
         
         # set frequency bands
-        if bands is None:
-            ulf = None
-            vlf = (0.000, 0.04)
-            lf = (0.04, 0.15)
-            hf = (0.15, 0.4)
-            args = (ulf, vlf, lf, hf)
-            names = ('ulf', 'vlf', 'lf', 'hf')
+        ulf = None
+        vlf = (0.000, 0.04)
+        lf = (0.04, 0.15)
+        hf = (0.15, 0.4)
+        args = (ulf, vlf, lf, hf)
+        names = ('ulf', 'vlf', 'lf', 'hf')
         freq_bands = dict(zip(names, args))
         #self.freq_bands = freq_bands
         
@@ -964,25 +1021,31 @@ class EKG:
         self.freq_stats = freq_stats
 
 
-    def calc_fstats(self, itype, method, bandwidth, window, bands=None):
-        """ Calculate frequency domain statistics 
+    def calc_fstats(self, itype, method, bandwidth, window):
+        """
+        Calculate commonly used frequency domain HRV statistics.
 
         Parameters
         ----------
-        itype: str
-            interval type (options: 'rr', 'nn')
-        method: str, optional (default: 'mt')
-            Method to compute power spectra. options: 'welch', 'mt' (multitaper)
-        bandwith: float, optional (default: 0.02)
-            Bandwidth for multitaper power spectral estimation
-        window: str, optional (default: 'hamming')
-            Window to use for welch FFT. See mne.time_frequency.psd_array_multitaper for options
-        bands: Nonetype
-            Frequency bands of interest. Leave as none for default. To do: update for custom bands
+        itype : str {'rr, 'nn'}
+            Interval type.
+            'rr' is uncleaned data. 'nn' is normal intervals (cleaned).
+        method : str, {'mt, 'welch'}
+            Method to compute power spectra.
+            'mt' is multitaper.
+        bandwith : float
+            Bandwidth for multitaper power spectral estimation.
+        window : str
+            Window to use for welch FFT. See mne.time_frequency.psd_array_multitaper for options.
+
+        See Also
+        --------
+        EKG.calc_tstats : Calculate commonly used time domain HRV statistics.
+        EKG.hrv_stats : Calculate both time and frequency domain HRV statistics on IBI object.
         """
         # resample & interpolate tachogram
         print('Interpolating and resampling tachogram...')
-        self.interpolateII(itype)
+        self.interpolate_IBI(itype)
        
        # calculate power spectrum
         print('Calculating power spectrum...')
@@ -993,21 +1056,30 @@ class EKG:
         
         #calculate frequency domain statistics
         print('Calculating frequency domain measures...')
-        self.calc_fbands(method, bands)
+        self.calc_fbands(method)
         print('Frequency measures stored in obj.freq_stats\n')
 
 
 
     def hrv_stats(self, itype='nn', nn_file=None, method='mt', bandwidth=0.01, window='hamming'):
-        """ Calculate all statistics on IBI object 
+        """
+        Calculate both time and frequency domain HRV statistics on IBI object.
 
-            TO DO: Add freq_stats arguments to hrv_stats params? 
-
-            Parameters
-            ----------
-            nn_file: str
-                path to csv file containing cleaned nn values, if nn values were
-                previously exported
+        Parameters
+        ----------
+        itype : str {'nn', 'rr'}
+            Interbeat interval object type to use for calculations. 
+            'rr' is uncleaned data. 'nn' is normal intervals (cleaned)
+        nn_file : str, optional
+            Path to csv file containing cleaned nn values, if nn values were previously exported.
+        method : str, {'mt', 'welch'}
+            Method to use when calculating power spectrum. 
+            'mt' is multitaper
+        bandwidth : float, default 0.01
+            Bandwidth used when calculating frequency domain statistics.
+        window : str , default 'hamming'
+            Window type used for welch power spectral analysis.
+            Options from scipy.signal welch.
         """
 
         self.metadata['analysis_info']['itype'] = itype
@@ -1076,11 +1148,23 @@ class EKG:
             print('{} does not exist. Data saved to new spreadsheet'.format(spreadsheet))
 
     def to_report(self, savedir=None, fmt='txt'):
-        """ export statistics as a csv report 
-            TO DO: add line to check if nn exists
+        """ 
+        Export HRV statistics as a csv report.
 
-            fmt: str (default: 'txt')
-                output format (options: 'txt', 'json')
+        Parameters
+        ----------
+        savedir : str, optional
+            Path to directory in which to save report.
+        fmt: str, {'txt', 'json'}
+            Output format.
+
+        See Also
+        --------
+        EKG.hrv_stats : Calculate both time and frequency domain HRV statistics on IBI object.
+        EKG.calc_fstats : Calculate commonly used frequency domain HRV statistics.
+        EKG.calc_tstats : Calculate commonly used time domain HRV statistics.
+        EKG.calc_psd_welch : Calculate welch power spectrum.
+        EKG.calc_psd_mt : Calculate multitaper power spectrum.
         """
         # set save directory
         if savedir is None:
@@ -1162,7 +1246,7 @@ class EKG:
             psd_mt_df.to_csv(psdfile, index=False)
 
 
-    ## plotting methods ##
+    # plotting methods
     def plotpeaks(self, rpeaks=True, ibi=True, thres = True):
         """
         Plot EKG class instance.
@@ -1241,9 +1325,30 @@ class EKG:
 
 
     def plotPS(self, method='mt', dB=False, bands=True, save=True, savedir=None):
-        """ Plot power spectrum """
+        """
+        Plot power spectrum with method of choice and save if appropriate. 
+
+        Parameters
+        ----------
+        method : str, {'mt', 'welch'}
+            Method by which power spectrum is to be calculated.
+            'mt' is multitaper.
+        dB : bool, default False
+            If True, decibals used as unit for power spectral density instead of s^2/Hz
+        bands : bool, default True
+            If True, spectrum plotted colored by frequency band.
+        save : bool, default True
+            If True, power spectrum will be saved as well as plotted.
+        savedir : str, optional
+            Path to directory where spectrum is to be saved. 
+
+        See Also
+        --------
+        EKG.calc_psd_mt : Calculate multitaper power spectrum.
+        EKG.calc_psd_welch : Calculate welch power spectrum. 
+        """
         
-         # set title
+        # set title
         title = self.metadata['file_info']['in_num'] + ' ' + self.metadata['file_info']['start_date'] + '\n' + self.metadata['file_info']['sleep_stage'] + ' ' + self.metadata['file_info']['cycle']
         try:
             n.metadata['file_info']['epoch']
@@ -1302,7 +1407,7 @@ class EKG:
         plt.ylabel(ylabel)
         plt.suptitle(title)
 
-        if save:
+        if save == True:
             if savedir is None:
                 print('ERROR: File not saved. Please specify savedir argument.')
             else:
