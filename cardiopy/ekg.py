@@ -773,10 +773,6 @@ class EKG:
         bandwidth: float
             Frequency resolution of power spectrum (NW).
 
-        Modifies
-        -------
-        self.psd_mt: Dict containing frequency and power information
-
         See Also
         --------
         EKG.calc_psd_welch : Calculate welch power spectrum.
