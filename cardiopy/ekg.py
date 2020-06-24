@@ -957,11 +957,19 @@ class EKG:
         self.psd_mt = {'freqs': freqs, 'pwr': pwr}
         self.metadata['analysis_info']['psd_method'] = 'multitaper'
 
-    def calc_fbands(self, method, bands):
-        """ Calculate different frequency band measures 
-            TO DO: add option to change bands
-            Note: modified from pyHRV
-            * normalized units are normalized to total lf + hf power, according to Heathers et al. (2014)
+    def calc_fbands(self, method):
+        """
+        Calculate frequency band measures.
+
+        Parameters
+        ----------
+        method : str {'welch', 'mt'}
+            Method to be used to calculate frequency band measures.
+ 
+        Notes
+        -----
+        Modified from pyHRV
+        Normalized units are normalized to total lf + hf power, according to Heathers et al. (2014)
         """
         if method is None:
             method = input('Please enter PSD method (options: "welch", "mt"): ')
@@ -971,13 +979,12 @@ class EKG:
             psd = self.psd_mt
         
         # set frequency bands
-        if bands is None:
-            ulf = None
-            vlf = (0.000, 0.04)
-            lf = (0.04, 0.15)
-            hf = (0.15, 0.4)
-            args = (ulf, vlf, lf, hf)
-            names = ('ulf', 'vlf', 'lf', 'hf')
+        ulf = None
+        vlf = (0.000, 0.04)
+        lf = (0.04, 0.15)
+        hf = (0.15, 0.4)
+        args = (ulf, vlf, lf, hf)
+        names = ('ulf', 'vlf', 'lf', 'hf')
         freq_bands = dict(zip(names, args))
         #self.freq_bands = freq_bands
         
