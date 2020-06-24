@@ -812,7 +812,7 @@ class EKG:
         print('Time domain stats stored in obj.time_stats\n')
 
     
-    def interpolateII(self, itype):
+    def interpolate_IBI(self, itype):
         """
         Resample tachogram to original sampling frequency and interpolate for power spectral estimation.
 
@@ -993,7 +993,7 @@ class EKG:
         """
         # resample & interpolate tachogram
         print('Interpolating and resampling tachogram...')
-        self.interpolateII(itype)
+        self.interpolate_IBI(itype)
        
        # calculate power spectrum
         print('Calculating power spectrum...')
