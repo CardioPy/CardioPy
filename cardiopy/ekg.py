@@ -368,10 +368,13 @@ class EKG:
         time : str {'hh:mm:ss'}
             Second within which peak is to be added.
 
-        Returns
+        Modifies
         -------
-        Modified self.rpeaks, self.rpeaks_df, self.rr, and self.nn attributes. Added peaks stored in 
-        self.rpeaks_added attribute.
+        self.rpeaks : Added peaks added to attribute.
+        self.rpeaks_df : Added peaks added to attribute.
+        self.rr : IBI values recalculate to reflect changed R peaks.
+        self.nn : IBI values recalculate to reflect changed R peaks.
+        self.rpeaks_added : Added peaks stored.
 
         See Also
         --------
