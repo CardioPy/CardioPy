@@ -893,8 +893,6 @@ class EKG:
         """
         Calculate both time and frequency domain HRV statistics on IBI object.
 
-            TO DO: Add freq_stats arguments to hrv_stats params? 
-
         Parameters
         ----------
         itype : str {'nn', 'rr'}
@@ -908,7 +906,8 @@ class EKG:
         bandwidth : float, default 0.01
             Bandwidth used when calculating frequency domain statistics.
         window : str , default 'hamming'
-            Window type used for welch power spectral analysis. Options at scipy.signal.
+            Window type used for welch power spectral analysis.
+            Options from scipy.signal welch.
         """
 
         self.metadata['analysis_info']['itype'] = itype
