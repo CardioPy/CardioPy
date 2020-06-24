@@ -1031,21 +1031,27 @@ class EKG:
         self.freq_stats = freq_stats
 
 
-    def calc_fstats(self, itype, method, bandwidth, window, bands=None):
-        """ Calculate frequency domain statistics 
+    def calc_fstats(self, itype, method, bandwidth, window):
+        """
+        Calculate commonly used frequency domain HRV statistics.
 
         Parameters
         ----------
-        itype: str
-            interval type (options: 'rr', 'nn')
-        method: str, optional (default: 'mt')
-            Method to compute power spectra. options: 'welch', 'mt' (multitaper)
-        bandwith: float, optional (default: 0.02)
-            Bandwidth for multitaper power spectral estimation
-        window: str, optional (default: 'hamming')
-            Window to use for welch FFT. See mne.time_frequency.psd_array_multitaper for options
-        bands: Nonetype
-            Frequency bands of interest. Leave as none for default. To do: update for custom bands
+        itype : str {'rr, 'nn'}
+            Interval type.
+            'rr' is uncleaned data. 'nn' is normal intervals (cleaned).
+        method : str, {'mt, 'welch'}
+            Method to compute power spectra.
+            'mt' is multitaper.
+        bandwith : float
+            Bandwidth for multitaper power spectral estimation.
+        window : str
+            Window to use for welch FFT. See mne.time_frequency.psd_array_multitaper for options.
+
+        See Also
+        --------
+        EKG.calc_tstats : Calculate commonly used time domain HRV statistics.
+        EKG.hrv_stats : Calculate both time and frequency domain HRV statistics on IBI object.
         """
         # resample & interpolate tachogram
         print('Interpolating and resampling tachogram...')
@@ -1060,7 +1066,7 @@ class EKG:
         
         #calculate frequency domain statistics
         print('Calculating frequency domain measures...')
-        self.calc_fbands(method, bands)
+        self.calc_fbands(method)
         print('Frequency measures stored in obj.freq_stats\n')
 
 
