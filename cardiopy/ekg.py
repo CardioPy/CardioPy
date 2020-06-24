@@ -301,15 +301,19 @@ class EKG:
         Parameters
         ----------
         time : str {'hh:mm:ss'}
-        Second of incorrectly removed R peak.
+            Second of incorrectly removed R peak.
 
         Notes
         -----
         This is strictly an "undo" method. It is NOT equivalent to add_peaks().
 
-        Returns
+        Modifies
         -------
-        Modified self.rpeaks, self.rpeaks_df, self.rr, self.nn, and self.rpeaks_artifacts attributes
+        self.rpeaks : incorrectly removed R peaks added back
+        self.rpeaks_df : incorrectly removed R peaks added back
+        self.rr : IBI values recalculated to reflect change in R peaks
+        self.nn : IBI values recalculated to reflect change in R peaks
+        self.rpeaks_artifacts : incorrectly removed R peaks removed from attribute
 
         See Also
         --------
