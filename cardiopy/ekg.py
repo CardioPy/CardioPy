@@ -1122,7 +1122,7 @@ class EKG:
         dB : bool, default False
             If True, decibals used as unit for power spectral density instead of s^2/Hz
         bands : bool, default True
-            If True, spectrum ploted colored by frequency band.
+            If True, spectrum plotted colored by frequency band.
         save : bool, default True
             If True, power spectrum will be saved as well as plotted.
         savedir : str, optional
