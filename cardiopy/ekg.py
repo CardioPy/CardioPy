@@ -773,6 +773,12 @@ class EKG:
         bandwidth: float
             Frequency resolution of power spectrum (NW).
 
+        Modifies
+        --------
+        self.psd_mt : Dict created containing power spectral density at respective frequencies.
+            'freqs' : np.ndarray
+            'pwr' : np.ndarray. Power spectral density in (V^2/Hz). 10log10 to convert to dB.
+
         See Also
         --------
         EKG.calc_psd_welch : Calculate welch power spectrum.
