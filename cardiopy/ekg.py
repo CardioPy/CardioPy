@@ -1386,7 +1386,6 @@ class EKG:
             # use matplotlib.patches.Patch to make objects for legend w/ data
             ax.plot(psd['freqs'], pwr, color='black')
             
-            #ax.plot(yline, color='black')
             
             colors = [None, 'yellow', 'orange', 'tomato']
             for (key, value), color in zip(self.psd_fband_vals.items(), colors):
