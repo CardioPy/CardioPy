@@ -16,9 +16,9 @@ setuptools.setup(
 	classifiers = [
 		"Programming Language :: Python :: 3",
 		"License :: OSI Approved :: MIT License",
-		"Operating System :: OS Indepedent",
-		"Intended Audience :: Healthcare Researchers",
-		"Topic :: Healthcare :: Heart Rate Variability"
+		"Operating System :: OS Independent",
+		"Intended Audience :: Science/Research",
+		"Topic :: Scientific/Engineering :: Medical Science Apps."
 		],
 	python_requires = '>=3.6',
 	install_requires = [
