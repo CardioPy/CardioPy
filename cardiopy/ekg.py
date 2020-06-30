@@ -1392,7 +1392,6 @@ class EKG:
                 if value['idx'] is not None:
                     # get intercepts & plot vertical lines for bands
                     xrange = [float(x) for x in self.freq_stats[key]['freq_range'][1:-1].split(",")] 
-                    coords = np.array(xline.intersection(yline))            
                     
                     # fill spectra by band
                     ax.fill_between(psd['freqs'], pwr, where = [xrange[0] <= x <=xrange[1] for x in psd['freqs']], 
