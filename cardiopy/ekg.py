@@ -1386,17 +1386,12 @@ class EKG:
             # use matplotlib.patches.Patch to make objects for legend w/ data
             ax.plot(psd['freqs'], pwr, color='black')
             
-            yline = SG.LineString(list(zip(psd['freqs'],pwr)))
-            #ax.plot(yline, color='black')
             
             colors = [None, 'yellow', 'orange', 'tomato']
             for (key, value), color in zip(self.psd_fband_vals.items(), colors):
                 if value['idx'] is not None:
                     # get intercepts & plot vertical lines for bands
                     xrange = [float(x) for x in self.freq_stats[key]['freq_range'][1:-1].split(",")] 
-                    xline = SG.LineString([(xrange[1], min(pwr)), (xrange[1], max(pwr))])
-                    coords = np.array(xline.intersection(yline))            
-                    ax.vlines(coords[0], 0, coords[1], colors='black', linestyles='dotted')
                     
                     # fill spectra by band
                     ax.fill_between(psd['freqs'], pwr, where = [xrange[0] <= x <=xrange[1] for x in psd['freqs']], 
