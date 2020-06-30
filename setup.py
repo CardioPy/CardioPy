@@ -27,7 +27,6 @@ setuptools.setup(
 		"os",
 		"pandas",
 		"scipy",
-		"shapely",
 		"statistics",
 		"mne",
 		"numpy"
