@@ -19,7 +19,6 @@ import numpy as np
 import os
 import pandas as pd 
 import scipy as sp
-import shapely.geometry as SG
 import statistics
 
 from mne.time_frequency import psd_array_multitaper
