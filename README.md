@@ -31,11 +31,13 @@ __4. HRV statistics export__<br>
    * Multi-file exports into .csv spreadsheets for group statistics<br>
 
 ## Usage
-Best when run with jupyter notebook. For detailed instructions see (will insert how to get to the example jupyter notebook file). (Section to be expanded as I see what can/can't be shown with the notebook file) 
+Best when run with jupyter notebook. For detailed instructions see template run in CardioPy/example_run/CardioPy_Example_2020.ipynb
+Do not try to remove interbeat intervals until' after all cleaning (addition/removal of peaks) has been done. 
+For optimal performance close any interactive windows with the off button on the top right corner.
+Only remove falsely added peaks with EKG.undo_add_peak NOT with EKG.rm_peak.
+Only re-add falsely removed peaks with EKG.undo_rm_peak NOT with EKG.add_peak.
 
 ## Installation
-(Will edit once run it myself to insure details are clear step by step)
-
 Use the package manager [pip](https://pip.pypa.io/en/stable/) to install CardioPy.
 
 ```bash
@@ -49,4 +51,4 @@ Pull requests are welcome. For major changes, please open an issue first to disc
 TBD
 
 ## Roadmap
-The authors plan for the next version of CardioPy to include automatic parameter detection. This would include upshift, moving window and smoothing window suggestions for optimal peak detection.
+The authors plan for the next version of CardioPy to include automatic parameter detection. This would include upshift, moving window and smoothing window suggestions for optimal peak detection. Future versions aim to implement a graphical user interface, as well as support for additional commonly used data formats.
