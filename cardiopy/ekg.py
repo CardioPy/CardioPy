@@ -8,7 +8,7 @@ EKG
 Notes
 -----
 All R peak detections should be manually inspected with EKG.plotpeaks method and
-false detections manually removed with rm_peaks method. After rpeak examination, 
+false detections manually removed with rm_peak method. After rpeak examination, 
 NaN data can be accounted for by removing false IBIs with rm_ibi method.
 """
 
@@ -283,7 +283,7 @@ class EKG:
 
         print('R-R intervals calculated')
 
-    def rm_peaks(self, time):
+    def rm_peak(self, time):
         """ 
         Examine a second of interest and manually remove artifact R peaks.
         
@@ -344,9 +344,9 @@ class EKG:
         self.nn = self.rr
 
 
-    def undo_rm_peaks(self, time):
+    def undo_rm_peak(self, time):
         """
-        Manually add back incorrectly removed peaks from EKG.rm_peaks method.
+        Manually add back incorrectly removed peaks from EKG.rm_peak method.
             
         Parameters
         ----------
@@ -367,7 +367,7 @@ class EKG:
 
         See Also
         --------
-        EKG.rm_peaks : Examine a second of interest and manually remove artifact R peaks.
+        EKG.rm_peak : Examine a second of interest and manually remove artifact R peaks.
         EKG.add_peak : Examine a second of interest and manually add missed R peaks.
         EKG.undo_add_peak : Manually remove incorrectly added peaks from EKG.add_peak method.
         """
@@ -443,8 +443,8 @@ class EKG:
         See Also
         --------
         EKG.undo_add_peak : Manually add back incorrectly added R peaks from EKG.add_peak method.
-        EKG.rm_peaks : Examine a second of interest and manually remove artifact R peak.
-        EKG.undo_rm_peak : Manually add back incorrectly removed R peaks from EKG.rm_peaks method.
+        EKG.rm_peak : Examine a second of interest and manually remove artifact R peak.
+        EKG.undo_rm_peak : Manually add back incorrectly removed R peaks from EKG.rm_peak method.
         """
         
         # specify time range of missed peak
@@ -511,13 +511,13 @@ class EKG:
 
         Notes
         -----
-        This is strictly an "undo" method. It is NOT equivalent to rm_peaks().
+        This is strictly an "undo" method. It is NOT equivalent to EKG.rm_peak.
 
         See Also
         --------
         EKG.add_peak : Examine a second of interest and manually add missed R peaks.
-        EKG.rm_peaks : Examine a second of interest and manually remove artifact R peaks.
-        EKG.undo_rm_peaks : Manually add back incorrectly removed peaks from EKG.rm_peaks method. 
+        EKG.rm_peak : Examine a second of interest and manually remove artifact R peaks.
+        EKG.undo_rm_peak : Manually add back incorrectly removed peaks from EKG.rm_peak method. 
         """
         
         if len(self.rpeaks_added) == 0:
