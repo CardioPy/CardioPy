@@ -29,7 +29,11 @@ __4. HRV statistics export__<br>
    * Multi-file exports into .csv spreadsheets for group statistics<br>
 
 ## Usage
-Best when run with jupyter notebook. For detailed instructions see template run in CardioPy/example_run/CardioPy_Example_2020.ipynb Do not try to remove interbeat intervals until' after all cleaning (addition/removal of peaks) has been done. For optimal performance close any interactive windows with the off button on the top right corner. Only remove falsely added peaks with EKG.undo_add_peak NOT with EKG.rm_peak. Only re-add falsely removed peaks with EKG.undo_rm_peak NOT with EKG.add_peak.
+Best when run with jupyter notebook. For detailed instructions see template run in CardioPy/example_run/CardioPy_Example_2020.ipynb
+Do not try to remove interbeat intervals until' after all cleaning (addition/removal of peaks) has been done.
+For optimal performance close any interactive windows with the off button on the top right corner.
+Only remove falsely added peaks with EKG.undo_add_peak NOT with EKG.rm_peak.
+Only re-add falsely removed peaks with EKG.undo_rm_peak NOT with EKG.add_peak.
 
 In cases where the R peak isn't very pronounced use smaller moving windows as well as low upshift percentages.
 For example in this segment with an upshift of 1.7% and a moving window of 50ms detection is not optimal.
