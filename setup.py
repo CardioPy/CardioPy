@@ -16,18 +16,19 @@ setuptools.setup(
 	classifiers = [
 		"Programming Language :: Python :: 3",
 		"License :: OSI Approved :: MIT License",
-		"Operating System :: OS Indepedent",
+		"Operating System :: OS Independent",
+		"Intended Audience :: Science/Research",
+		"Topic :: Scientific/Engineering :: Medical Science Apps."
 		],
 	python_requires = '>=3.6',
-	setup_requires=["numpy"],
 	install_requires = [
 		"datetime",
 		"matplotlib",
 		"os",
 		"pandas",
 		"scipy",
-		"shapely",
 		"statistics",
-		"mne"
+		"mne",
+		"numpy"
 	]
 	)

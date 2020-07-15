@@ -1,0 +1,65 @@
+metadata
+	file_info
+		in_num HCXXX
+		fname HCXXX_2001-01-01_awake_cycle1_epoch1_222000.csv
+		path Z:/DropBox/JackieToNatasha/python_packaging/example_run\HCXXX_2001-01-01_awake_cycle1_epoch1_222000.csv
+		start_date 2001-01-01
+		sleep_stage awake
+		cycle cycle1
+		epoch epoch1
+		start_time 2001-01-01 22:20:00
+	analysis_info
+		s_freq 250.0
+		cycle_len_secs 299.996
+		NaNs(samples) 12500
+		NaNs(secs) 50.0
+		smooth True
+		rms_smooth_wn 20
+		mw_size 60
+		upshift 4.7
+		itype nn
+		artifacts_rmvd 1 false peaks (removed); 0 missed peaks (added); 4 ibis removed (from NaN data)
+		s_freq_interp 250.0
+		psd_method multitaper
+		psd_bandwidth 0.01
+time_stats
+	linear
+		HR_avg 77.76805677068145
+		HR_max 84.65011286681715
+		HR_min 74.55268389662028
+		IBI_mean 771.525
+		SDNN 22.691041967700322
+		RMSSD 9.119203616991479
+		pXX20 4.088050314465408
+		pXX50 0.3144654088050315
+freq_stats
+	totals
+		total_pwr 105251.54497879234
+		lf/hf 7.444130619555889
+	ulf
+		freq_range None
+		pwr_ms2 None
+		pwr_peak None
+		pwr_log None
+		pwr_% None
+		pwr_nu None
+	vlf
+		freq_range (0.0, 0.04)
+		pwr_ms2 70217.17296741603
+		pwr_peak 0.008125589105210128
+		pwr_log 11.159348189262538
+		pwr_% 66.71367435182489
+	lf
+		freq_range (0.04, 0.15)
+		pwr_ms2 30885.410609685103
+		pwr_peak 0.04062794552605064
+		pwr_log 10.33803920283473
+		pwr_% 29.344377430191983
+		pwr_nu 88.15745462671923
+	hf
+		freq_range (0.15, 0.4)
+		pwr_ms2 4148.961401691216
+		pwr_peak 0.3047095914453798
+		pwr_log 8.3306133172506
+		pwr_% 3.9419482179831293
+		pwr_nu 11.842545373280762

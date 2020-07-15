@@ -1,24 +1,15 @@
-""" This file contains the EKG class 
+"""
+This file contains methods to visualize EKG data, clean EKG data and run EKG analyses.
 
-    All R peak detections should be manually inspected with EKG.plotpeaks method and
-    false detections manually removed with rm_peaks method. After rpeak examination, 
-    NaN data can be accounted for by removing false IBIs with rm_ibi method.
+Classes
+-------
+EKG
 
-    TO DO:
-        ** Update docstrings **
-        1. Add option to extract sampling frequency & milliseconds from time column
-        2. Re-add code to import previously cleaned nn data -- DONE. 11-24-19 in hrv_stats method
-        3. Add range options for indices for rm peaks and rm ibis
-        4. Add more descriptive error message for ValueError encountered during
-            add_peaks if range is outside of data
-        5. Add option for auto-determining threshold parameters (mw_size and upshift)
-        6. Add threshold statistics (sensitivity & PPV) to output
-        7. Update hrv_stats to assume NN
-        8. Add nn attribute for data that doesn't require cleanings
-        9. Fix spreadsheet alignment when smoothing used (incorp smooth & sm_wn metadata to all files)
-        10. Option for 1000Hz interpolation prior to peak detection; Option for 4Hz resampling of NN tachogram
-            rather than original sampling frequencys
-
+Notes
+-----
+All R peak detections should be manually inspected with EKG.plotpeaks method and
+false detections manually removed with rm_peak method. After rpeak examination, 
+NaN data can be accounted for by removing false IBIs with rm_ibi method.
 """
 
 import datetime
@@ -28,7 +19,6 @@ import numpy as np
 import os
 import pandas as pd 
 import scipy as sp
-import shapely.geometry as SG
 import statistics
 
 from mne.time_frequency import psd_array_multitaper
@@ -36,46 +26,64 @@ from pandas.plotting import register_matplotlib_converters
 from scipy.signal import welch
 
 class EKG:
-    """ General class containing EKG analyses
-    
-    Parameters
-    ----------
-    df: pd.DataFrame
-        Dataframe containing 'EKG' column data. First two rows are headers [Channel, Datatype]
+    """
+    Run EKG analyses including cleaning and visualizing data.
     
     Attributes
     ----------
+    metadata : nested dict
+        File information and analysis information.
+        Format {str:{str:val}} with val being str, bool, float, int or pd.Timestamp.
+    data : pd.DataFrame
+        Raw data of the EKG signal (mV) and the threshold line (mV) at each sampled time point.
+    rpeak_artifacts : pd.Series
+        False R peak detections that have been removed.
+    rpeaks_added : pd.Series
+        R peak detections that have been added.
+    ibi_artifacts : pd.Series
+        Interbeat interval data that has been removed.
+    rpeaks : pd.Series
+        Cleaned R peaks data without removed peaks and with added peaks.
+    rr : np.ndarray
+        Time between R peaks (ms).
+    nn : np.ndarray
+        Cleaned time between R peaks (ms) without removed interbeat interval data.
+    rpeaks_df : pd.DataFrame
+        Raw EKG value (mV) and corresponding interbeat interval leading up to the data point (ms) at each sampled point.
     """
 
-    def __init__(self, fname, fpath, min_dur=True, epoched=True, smooth=False, sm_wn=30, mw_size=100, upshift=3.5, rm_artifacts=False, detect_peaks=True):
-        """ Initialize raw EKG object
+    def __init__(self, fname, fpath, min_dur=True, epoched=True, smooth=False, sm_wn=30, mw_size=100, upshift=3.5, detect_peaks=True):
+        """
+        Initialize raw EKG object.
 
         Parameters
         ----------
-        fname: str
-            filename
-        fpath: str
-            path to file
-        min_dur: bool (default:True)
-            only load files that are >= 5 minutes long
-        epoched: bool (default: True)
-            Whether file was epoched using ioeeg
-        smooth: BOOL (default: False)
+        fname : str
+            Filename.
+        fpath : str
+            Path to file.
+        min_dur : bool, default True
+            Only load files that are >= 5 minutes long.
+        epoched : bool, default True
+            Whether file was epoched using ioeeg.
+        smooth : bool, default False
             Whether raw signal should be smoothed before peak detections. Set True if raw data has consistent high frequency noise
-            preventing accurate peak detection
-        sm_wn: float (default: 30)
-            Size of moving window for rms smoothing preprocessing (milliseconds)
-        mw_size: float (default: 100)
-            Moving window size for R peak detection (milliseconds)
-        upshift: float (default: 3.5)
-            Detection threshold upshift for R peak detection (% of signal)
-        rm_artifacts: bool (default: False)
-            Apply IBI artifact removal algorithm
+            preventing accurate peak detection.
+        sm_wn : float, default 30
+            Size of moving window for rms smoothing preprocessing (milliseconds).
+        mw_size : float, default 100
+            Moving window size for R peak detection (milliseconds).
+        upshift : float, default 3.5
+            Detection threshold upshift for R peak detection (% of signal).
+        rm_artifacts : bool, default False
+            Apply IBI artifact removal algorithm.
+        detect_peaks : bool, default True
+            Option to detect R peaks and calculate interbeat intervals.
 
         Returns
         -------
-        EKG object w/ R peak detections and calculated inter-beat intervals
-         """
+        EKG object. Includes R peak detections and calculated inter-beat intervals if detect_peaks is set to True.
+        """
 
         # set metadata
         filepath = os.path.join(fpath, fname)
@@ -105,19 +113,19 @@ class EKG:
         # detect R peaks
         if detect_peaks == True:
             # detect R peaks & calculate inter-beat intevals
-            self.calc_RR(smooth, mw_size, upshift, rm_artifacts)
+            self.calc_RR(smooth, mw_size, upshift)
 
         register_matplotlib_converters()
         
         
     def load_ekg(self, min_dur):
         """ 
-        Load ekg data and extract sampling frequency. 
+        Load EKG data from csv file and extract metadata including sampling frequency, cycle length, start time and NaN data.
         
         Parameters
         ----------
-        min_dur: bool, default: True
-            If set to True, will not load files shorter than minimum duration in length 
+        min_dur : bool, default True
+            If set to True, will not load files shorter than the minimum duration length of 5 minutes.
         """
         
         data = pd.read_csv(self.metadata['file_info']['path'], header = [0, 1], index_col = 0, parse_dates=True)['EKG']
@@ -139,6 +147,7 @@ class EKG:
         s_freq = 1000000/diff[0].microseconds
         nans = len(data) - data['Raw'].count()
 
+        # Set metadata 
         self.metadata['file_info']['start_time'] = data.index[0]
         self.metadata['analysis_info'] = {'s_freq': s_freq, 'cycle_len_secs': cycle_len_secs, 
                                         'NaNs(samples)': nans, 'NaNs(secs)': nans/s_freq}
@@ -146,7 +155,16 @@ class EKG:
         print('EKG successfully imported.')
 
     def rms_smooth(self, sm_wn):
-        """ Smooth raw data with RMS moving window """
+        """ 
+        Smooth raw data with root mean square (RMS) moving window.
+
+        Reduce noise leading to false R peak detections.
+
+        Parameters
+        ----------
+        sm_wn : float, default 30
+            Size of moving window for RMS smoothing preprocessing (ms).
+        """
         self.metadata['analysis_info']['smooth'] = True
         self.metadata['analysis_info']['rms_smooth_wn'] = sm_wn
         
@@ -155,11 +173,28 @@ class EKG:
 
 
     def set_Rthres(self, smooth, mw_size, upshift):
-        """ set R peak detection threshold based on moving average + %signal upshift """
+        """
+        Set R peak detection threshold based on moving average shifted up by a percentage of the EKG signal.
+        
+        Parameters
+        ----------
+        smooth : bool, default False
+            If set to True, raw EKG data will be smoothed using RMS smoothing window.
+        mw_size : float, default 100
+            Time over which the moving average of the EKG signal will be taken to calculate the R peak detection threshold (ms).
+        upshift : float, default 3.5
+            Percentage of EKG signal that the moving average will be shifted up by to set the R peak detection threshold.
+
+        See Also
+        --------
+        EKG.rms_smooth : Smooth raw EKG data with root mean square (RMS) moving window.
+
+        """
         print('Calculating moving average with {} ms window and a {}% upshift...'.format(mw_size, upshift))
         
         # convert moving window to sample & calc moving average over window
         mw = int((mw_size/1000)*self.metadata['analysis_info']['s_freq'])
+        #if smooth is true have the moving average calculated based off of smoothed data
         if smooth == False:
             mavg = self.data.Raw.rolling(mw).mean()
             ekg_avg = np.mean(self.data['Raw'])
@@ -170,12 +205,13 @@ class EKG:
         # replace edge nans with overall average
         mavg = mavg.fillna(ekg_avg)
 
-        # set detection threshold as +5% of moving average
+        # set detection threshold as +upshift% of moving average
         upshift_mult = 1 + upshift/100
         det_thres = mavg*upshift_mult
         # insert threshold column at consistent position in df to ensure same color for plotting regardless of smoothing
         self.data.insert(1, 'EKG_thres', det_thres) # can remove this for speed, just keep as series
 
+        #set metadata
         self.metadata['analysis_info']['mw_size'] = mw_size
         self.metadata['analysis_info']['upshift'] = upshift
 
@@ -185,18 +221,30 @@ class EKG:
         self.ibi_artifacts = pd.Series()
 
     def detect_Rpeaks(self, smooth):
-        """ detect R peaks from raw signal """
-        print('Detecting R peaks...')
+        """ 
+        Detect R peaks of raw or smoothed EKG signal based on detection threshold. 
+        Parameters
+        ----------
+        smooth : bool, default False
+        If set to True, raw EKG data is smoothed using a RMS smoothing window.
 
+        See Also
+        --------
+        EKG.rms_smooth : Smooth raw EKG data with root mean square (RMS) moving window
+        EKG.set_Rthres : Set R peak detection threshold based on moving average shifted up by a percentage of the EKG signal.
+        """
+        print('Detecting R peaks...')
+        #Use the raw data or smoothed data depending on bool smooth
         if smooth == False:
             raw = pd.Series(self.data['Raw'])
         elif smooth == True:
             raw = pd.Series(self.data['raw_smooth'])
         
         thres = pd.Series(self.data['EKG_thres'])
-        
+        #create empty peaks list
         peaks = []
         x = 0
+        #Within the length of the data if the value of raw data (could be smoothed raw data) is less than ekg threshold keep counting forwards
         while x < len(raw):
             if raw[x] > thres[x]:
                 roi_start = x
@@ -235,18 +283,20 @@ class EKG:
 
         print('R-R intervals calculated')
 
-    def rm_peaks(self, time):
+    def rm_peak(self, time):
         """ 
-        Examine a second of interest and manually remove artifact peaks
+        Examine a second of interest and manually remove artifact R peaks.
         
         Parameters
         ----------
-        time: str format 'hh:mm:ss'
+        time: str {'hh:mm:ss'}
+            Time in the format specified dictating the second containing the peak of interest.
         
-        Returns
+        Modifies
         -------
-        Modified self.rpeaks and self.rpeaks_df attributes. Removed peaks added to 
-        self.rpeak_artifacts attribute.
+        self.rpeaks : Peaks that have been removed are removed from attribute.
+        self.rpeaks_df : Peaks that have been removed are removed from attribute.
+        self.rpeak_artifacts : Removed peaks added to attribute.
         """
         
         # print all rpeaks in the second of interest
@@ -294,18 +344,32 @@ class EKG:
         self.nn = self.rr
 
 
-    def undo_rm_peaks(self, time):
-        """ add back incorrectly removed peaks from rm_peaks() method
-            NOTE: This is strictly an "undo" method. It is NOT equivalent to add_peaks().
+    def undo_rm_peak(self, time):
+        """
+        Manually add back incorrectly removed peaks from EKG.rm_peak method.
             
-            Parameters
-            ----------
-            time: str (format 'hh:mm:ss')
-                second of incorrectly removed peak
-            
-            Returns
-            -------
-            Modified self.rpeaks, self.rpeaks_df, self.rr, self.nn, and self.rpeaks_artifacts attributes
+        Parameters
+        ----------
+        time : str {'hh:mm:ss'}
+            Second of incorrectly removed R peak.
+
+        Notes
+        -----
+        This is strictly an "undo" method. It is NOT equivalent to add_peaks().
+
+        Modifies
+        -------
+        self.rpeaks : Incorrectly removed R peaks added back.
+        self.rpeaks_df : Incorrectly removed R peaks added back.
+        self.rr : IBI values recalculated to reflect change in R peaks.
+        self.nn : IBI values recalculated to reflect change in R peaks.
+        self.rpeaks_artifacts : Incorrectly removed R peaks removed from attribute.
+
+        See Also
+        --------
+        EKG.rm_peak : Examine a second of interest and manually remove artifact R peaks.
+        EKG.add_peak : Examine a second of interest and manually add missed R peaks.
+        EKG.undo_add_peak : Manually remove incorrectly added peaks from EKG.add_peak method.
         """
         
         if len(self.rpeak_artifacts) == 0:
@@ -360,16 +424,27 @@ class EKG:
         self.nn = self.rr    
 
     def add_peak(self, time):
-        """ manually add missed peaks 
+        """
+        Examine a second of interest and manually add missed R peaks.
 
         Parameters
         ----------
-        time: str format 'hh:mm:ss'
-        
-        Returns
+        time : str {'hh:mm:ss'}
+            Second within which peak is to be added.
+
+        Modifies
         -------
-        Modified self.rpeaks, self.rpeaks_df, self.rr, and self.nn attributes. Added peaks stored in 
-        self.rpeaks_added attribute.
+        self.rpeaks : Added peaks added to attribute.
+        self.rpeaks_df : Added peaks added to attribute.
+        self.rr : IBI values recalculate to reflect changed R peaks.
+        self.nn : IBI values recalculate to reflect changed R peaks.
+        self.rpeaks_added : Added peaks stored.
+
+        See Also
+        --------
+        EKG.undo_add_peak : Manually add back incorrectly added R peaks from EKG.add_peak method.
+        EKG.rm_peak : Examine a second of interest and manually remove artifact R peak.
+        EKG.undo_rm_peak : Manually add back incorrectly removed R peaks from EKG.rm_peak method.
         """
         
         # specify time range of missed peak
@@ -386,9 +461,14 @@ class EKG:
                 roi.append(x)
 
         # define new rpeak
-        peak_idx = self.data.loc[roi]['Raw'].idxmax()
-        peak_val = self.data['Raw'].loc[peak_idx]
-        new_peak = pd.Series(peak_val, [peak_idx])
+        if self.metadata['analysis_info']['smooth'] == False:
+        	peak_idx = self.data.loc[roi]['Raw'].idxmax()
+        	peak_val = self.data['Raw'].loc[peak_idx]
+        	new_peak = pd.Series(peak_val, [peak_idx])
+        if self.metadata['analysis_info']['smooth'] == True:
+            peak_idx = self.data.loc[roi]['raw_smooth'].idxmax()
+            peak_val = self.data['raw_smooth'].loc[peak_idx]
+            new_peak = pd.Series(peak_val, [peak_idx])
 
         # add peak to rpeaks list
         self.rpeaks = self.rpeaks.append(new_peak)
@@ -413,17 +493,31 @@ class EKG:
         self.nn = self.rr
 
     def undo_add_peak(self, time):
-        """ remove an incorrect peak from add_peaks() method
-            NOTE: This is strictly an "undo" method. It is NOT equivalent to rm_peaks().
-            
-            Parameters
-            ----------
-            time: str (format 'hh:mm:ss')
-                second of incorrectly added peak
-            
-            Returns
-            -------
-            Modified self.rpeaks, self.rpeaks_df, self.rr, self.nn, and self.rpeaks_added attributes
+        """
+        Manually remove incorrectly added peaks from EKG.add_peak method.
+
+        Parameters
+        ----------
+        time : str {'hh:mm:ss'}
+            Second of incorrectly removed R peak.
+   
+        Modifies
+        -------
+        self.rpeaks : Incorrectly added R peaks removed.
+        self.rpeaks_df : Incorrectly added R peaks removed.
+        self.rr : IBI values recalculated to reflect change in R peaks.
+        self.nn : IBI values recalculated to reflect change in R peaks.
+        self.rpeaks_added : Incorrectly added R peaks removed from attribute.
+
+        Notes
+        -----
+        This is strictly an "undo" method. It is NOT equivalent to EKG.rm_peak.
+
+        See Also
+        --------
+        EKG.add_peak : Examine a second of interest and manually add missed R peaks.
+        EKG.rm_peak : Examine a second of interest and manually remove artifact R peaks.
+        EKG.undo_rm_peak : Manually add back incorrectly removed peaks from EKG.rm_peak method. 
         """
         
         if len(self.rpeaks_added) == 0:
@@ -474,14 +568,23 @@ class EKG:
         self.nn = self.rr    
 
     def rm_ibi(self, thres = 3000):
-        """ Manually remove IBI's corresponding to missing data (due to cleaning) or missed beats that can't be
-            manually added with ekg.add_peak() method
-            NOTE: This step must be completed LAST, after removing any false peaks and adding any missed peaks
+        """
+        Manually remove IBI's that can't be manually added with EKG.add_peak() method.
         
-            Parameters
-            ----------
-            thres: int
-                threshold in milliseconds for automatic IBI removal
+        IBIs to be removed could correspond to missing data (due to cleaning) or missed beats.
+
+        Parameters
+        ----------
+        thres: int, default 3000
+            Threshold time for automatic IBI removal (ms).
+
+        Notes
+        -----
+        This step must be completed LAST, after removing any false peaks and adding any missed peaks.
+
+        See Also
+        --------
+        EKG.add_peak : Manually add missed R peaks. 
         """
         
         # check for extra-long IBIs & option to auto-remove
@@ -545,20 +648,48 @@ class EKG:
                 print('R peaks dataframe updated.\nDone.')
 
 
-    def calc_RR(self, smooth, mw_size, upshift, rm_artifacts):
-        """ Detect R peaks and calculate R-R intervals """
+    def calc_RR(self, smooth, mw_size, upshift):
+        """
+        Set R peak detection threshold, detect R peaks and calculate R-R intervals.
+
+        Parameters
+        ----------
+        smooth : bool, default True
+            If set to True, raw EKG data will be smoothed using RMS smoothing window.
+        mw_size : float, default 100
+            Time over which the moving average of the EKG signal will be taken to calculate the R peak detection threshold (ms).
+        upshift : float, default 3.5
+            Percentage of EKG signal that the moving average will be shifted up by to set the R peak detection threshold.
+
+        See Also
+        --------
+        EKG.set_Rthres : Set R peak detection threshold based on moving average shifted up by a percentage of the EKG signal.
+        EKG.detect_Rpeaks :  Detect R peaks of raw or smoothed EKG signal based on detection threshold. 
+        """
         
         # set R peak detection parameters
         self.set_Rthres(smooth, mw_size, upshift)
         # detect R peaks & make RR tachogram
         self.detect_Rpeaks(smooth)
-        # remove artifacts
-        if rm_artifacts == True:
-            self.rm_artifacts()
 
     def export_RR(self, savedir):
-        """ Export R peaks and RR interval data to .txt files """
+        """
+        Export R peaks and RR interval data to .txt files.
 
+        Includes list of R peaks artifacts, R peaks added, R peaks detected, IBI artifacts, RR intervals and NN intervals.
+
+        Parameters
+        ----------
+        savedir : str
+            Path to directory where .txt files will be saved.
+
+        See Also
+        --------
+        EKG.calc_RR : Set R peak detection threshold, detect R peaks and calculate R-R intervals.
+        EKG.rm_ibi :  Manually remove IBI's that can't be manually added with EKG.add_peak() method.
+        EKG.add_peak : Manually add missed R peak. 
+        EKG.rm_peak : Examine a second of interest and manually remove artifact R peaks.
+        """
         # set save directory
         if savedir is None:
             savedir = os.getcwd()
@@ -646,12 +777,26 @@ class EKG:
 
 
     def calc_tstats(self, itype):
-        """ Calculate commonly used time domain HRV statistics. Min/max HR is determined over 5 RR intervals 
+        """
+        Calculate commonly used time domain HRV statistics.
 
-            Params
-            ------
-            itype: str, 
-                Interval type (Options:'rr', 'nn'). 'rr' is uncleaned data. 'nn' is normal intervals (cleaned)
+        Time domain HRV statistics include mean, min and max HR (bpm), mean interbeat interval length, SDNN, RMSSD, pNN20 and pNN50.
+        SDNN is the standard deviation of normal to normal IBI. RMSSD is the root mean squared standard deviation of normal interbeat interval length.
+        pNN20 and pNN50 are the percentage of normal interbeat intervals that exceed 20ms and 50ms respectively.
+        Min and max HR is determined over 5 RR intervals.
+
+        Parameters
+        ----------
+        itype : str {'rr, 'nn'}
+            Interval type.'rr' is uncleaned data. 'nn' is normal intervals (cleaned).
+
+        See Also
+        --------
+        EKG.hrv_stats : Calculate all HRV statistics on IBI object.
+        EKG.calc_fstats : Calculate frequency domain statistics.
+        EKG.calc_psd_welch : Calculate welch power spectrum.
+        EKG.calc_psd_mt : Calculate multitaper power spectrum. 
+        EKG.calc_fbands : Calculate different frequency band measures.
         """   
         print('Calculating time domain statistics...')
 
@@ -697,15 +842,25 @@ class EKG:
         print('Time domain stats stored in obj.time_stats\n')
 
     
-    def interpolateII(self, itype):
-        """ Resample tachogram to original sampling frequency (since RRs are not evenly spaced)
-            and interpolate for power spectral estimation 
-            *Note: adapted from pyHRV
+    def interpolate_IBI(self, itype):
+        """
+        Resample tachogram to original sampling frequency and interpolate for power spectral estimation.
 
-            Params
-            ------
-            itype: str
-                interval type (options: 'rr', 'nn')
+        This is done since RRs are not evenly placed.
+
+        Parameters
+        ----------
+        itype : str {'rr, 'nn'}
+        Interval type.'rr' is uncleaned data. 'nn' is normal intervals (cleaned).
+        
+        Note
+        ----
+        Adapted from pyHRV
+
+        See Also
+        --------
+        EKG.calc_psd_welch : Calculate welch power spectrum.
+        EKG.calc_psd_mt : Calculate multitaper power spectrum.
         """
         # specify data
         if itype == 'rr':
@@ -725,14 +880,22 @@ class EKG:
 
 
     def calc_psd_welch(self, itype, window):
-        """ Calculate welch power spectral density 
+        """ 
+        Calculate welch power spectrum.
 
-            Params
-            ------
-            itype: str
-                interval type (options: 'rr', 'nn')
-            window: str
-                windowing function. options from scipy.signal welch. (wrapper default: 'hamming')
+        Parameters
+        ----------
+        itype : str {'rr', 'nn'}
+            Interval type with which to calculate the power spectrum.
+            'rr' is uncleaned data. 'nn' is normal intervals (cleaned).
+        window : str
+            Windowing function.
+            Options from scipy.signal welch
+            Wrapper default 'hamming'
+
+        See Also
+        --------
+        EKG.calc_psd_mt : Calculate multitaper power spectrum.
         """
         
         self.metadata['analysis_info']['psd_method'] = 'welch'
@@ -760,19 +923,23 @@ class EKG:
 
 
     def calc_psd_mt(self, bandwidth):
-        """ Calculate multitaper power spectrum 
+        """
+        Calculate multitaper power spectrum.
 
-            Params
-            ------
-            bandwidth: float
-                frequency resolution (NW)
+        Parameters
+        ----------
+        bandwidth: float
+            Frequency resolution of power spectrum (NW).
 
-            Returns
-            -------
-            psd_mt: dict
-                'freqs': ndarray
-                'psd': ndarray. power spectral density in (V^2/Hz). 10log10 to convert to dB.
+        Modifies
+        --------
+        self.psd_mt : Dict created containing power spectral density at respective frequencies.
+            'freqs' : np.ndarray
+            'pwr' : np.ndarray. Power spectral density in (V^2/Hz). 10log10 to convert to dB.
 
+        See Also
+        --------
+        EKG.calc_psd_welch : Calculate welch power spectrum.
         """
         self.metadata['analysis_info']['psd_method'] = 'multitaper'
         self.metadata['analysis_info']['psd_bandwidth'] = bandwidth
@@ -783,11 +950,19 @@ class EKG:
         self.psd_mt = {'freqs': freqs, 'pwr': pwr}
         self.metadata['analysis_info']['psd_method'] = 'multitaper'
 
-    def calc_fbands(self, method, bands):
-        """ Calculate different frequency band measures 
-            TO DO: add option to change bands
-            Note: modified from pyHRV
-            * normalized units are normalized to total lf + hf power, according to Heathers et al. (2014)
+    def calc_fbands(self, method):
+        """
+        Calculate frequency band measures.
+
+        Parameters
+        ----------
+        method : str {'welch', 'mt'}
+            Method to be used to calculate frequency band measures.
+ 
+        Notes
+        -----
+        Modified from pyHRV
+        Normalized units are normalized to total lf + hf power, according to Heathers et al. (2014)
         """
         if method is None:
             method = input('Please enter PSD method (options: "welch", "mt"): ')
@@ -797,13 +972,12 @@ class EKG:
             psd = self.psd_mt
         
         # set frequency bands
-        if bands is None:
-            ulf = None
-            vlf = (0.000, 0.04)
-            lf = (0.04, 0.15)
-            hf = (0.15, 0.4)
-            args = (ulf, vlf, lf, hf)
-            names = ('ulf', 'vlf', 'lf', 'hf')
+        ulf = None
+        vlf = (0.000, 0.04)
+        lf = (0.04, 0.15)
+        hf = (0.15, 0.4)
+        args = (ulf, vlf, lf, hf)
+        names = ('ulf', 'vlf', 'lf', 'hf')
         freq_bands = dict(zip(names, args))
         #self.freq_bands = freq_bands
         
@@ -850,25 +1024,31 @@ class EKG:
         self.freq_stats = freq_stats
 
 
-    def calc_fstats(self, itype, method, bandwidth, window, bands=None):
-        """ Calculate frequency domain statistics 
+    def calc_fstats(self, itype, method, bandwidth, window):
+        """
+        Calculate commonly used frequency domain HRV statistics.
 
         Parameters
         ----------
-        itype: str
-            interval type (options: 'rr', 'nn')
-        method: str, optional (default: 'mt')
-            Method to compute power spectra. options: 'welch', 'mt' (multitaper)
-        bandwith: float, optional (default: 0.02)
-            Bandwidth for multitaper power spectral estimation
-        window: str, optional (default: 'hamming')
-            Window to use for welch FFT. See mne.time_frequency.psd_array_multitaper for options
-        bands: Nonetype
-            Frequency bands of interest. Leave as none for default. To do: update for custom bands
+        itype : str {'rr, 'nn'}
+            Interval type.
+            'rr' is uncleaned data. 'nn' is normal intervals (cleaned).
+        method : str, {'mt, 'welch'}
+            Method to compute power spectra.
+            'mt' is multitaper.
+        bandwith : float
+            Bandwidth for multitaper power spectral estimation.
+        window : str
+            Window to use for welch FFT. See mne.time_frequency.psd_array_multitaper for options.
+
+        See Also
+        --------
+        EKG.calc_tstats : Calculate commonly used time domain HRV statistics.
+        EKG.hrv_stats : Calculate both time and frequency domain HRV statistics on IBI object.
         """
         # resample & interpolate tachogram
         print('Interpolating and resampling tachogram...')
-        self.interpolateII(itype)
+        self.interpolate_IBI(itype)
        
        # calculate power spectrum
         print('Calculating power spectrum...')
@@ -879,21 +1059,30 @@ class EKG:
         
         #calculate frequency domain statistics
         print('Calculating frequency domain measures...')
-        self.calc_fbands(method, bands)
+        self.calc_fbands(method)
         print('Frequency measures stored in obj.freq_stats\n')
 
 
 
     def hrv_stats(self, itype='nn', nn_file=None, method='mt', bandwidth=0.01, window='hamming'):
-        """ Calculate all statistics on IBI object 
+        """
+        Calculate both time and frequency domain HRV statistics on IBI object.
 
-            TO DO: Add freq_stats arguments to hrv_stats params? 
-
-            Parameters
-            ----------
-            nn_file: str
-                path to csv file containing cleaned nn values, if nn values were
-                previously exported
+        Parameters
+        ----------
+        itype : str {'nn', 'rr'}
+            Interbeat interval object type to use for calculations. 
+            'rr' is uncleaned data. 'nn' is normal intervals (cleaned)
+        nn_file : str, optional
+            Path to csv file containing cleaned nn values, if nn values were previously exported.
+        method : str, {'mt', 'welch'}
+            Method to use when calculating power spectrum. 
+            'mt' is multitaper
+        bandwidth : float, default 0.01
+            Bandwidth used when calculating frequency domain statistics.
+        window : str , default 'hamming'
+            Window type used for welch power spectral analysis.
+            Options from scipy.signal welch.
         """
 
         self.metadata['analysis_info']['itype'] = itype
@@ -920,16 +1109,24 @@ class EKG:
         print('Done.')
 
     def to_spreadsheet(self, spreadsheet, savedir):
-        """ Append calculations as a row in master spreadsheet. Creates new spreadsheet
-            if output file does not exist. 
-            
-            Parameters
-            ----------
-            ekg: EKG object
-            spreadsheet: .csv
-                output file (new or existing)
         """
-        
+        Append calculations as a row in master spreadsheet.
+
+        Information exported includes arrays 'data', 'rpeaks', 'rr', 'rr_diff', 'rr_diffsq', 'rpeak_artifacts', 'rpeaks_added', 'ibi_artifacts',
+        'rpeaks_df', 'nn', 'nn_diff', 'nn_diffsq', 'rr_arts', 'ii_interp', 'psd_mt', 'psd_welch', 'psd_fband_vals' if calculated. 
+
+        Parameters
+        ----------
+        savedir : str
+            Path to directory where spreadsheet will be saved. 
+
+        spreadsheet : str
+            Name of output file. 
+
+        Notes
+        -----
+        Creates new spreadsheet if output file does not exist. 
+        """
         # this is from before division to two classes. 'data' and 'rpeaks' arrays shouldn't exist in IBI object.
         arrays = ['data', 'rpeaks', 'rr', 'rr_diff', 'rr_diffsq', 'rpeak_artifacts', 'rpeaks_added', 'ibi_artifacts',
         'rpeaks_df', 'nn', 'nn_diff', 'nn_diffsq', 'rr_arts', 'ii_interp', 'psd_mt', 'psd_welch', 'psd_fband_vals']
@@ -954,11 +1151,23 @@ class EKG:
             print('{} does not exist. Data saved to new spreadsheet'.format(spreadsheet))
 
     def to_report(self, savedir=None, fmt='txt'):
-        """ export statistics as a csv report 
-            TO DO: add line to check if nn exists
+        """ 
+        Export HRV statistics as a csv report.
 
-            fmt: str (default: 'txt')
-                output format (options: 'txt', 'json')
+        Parameters
+        ----------
+        savedir : str, optional
+            Path to directory in which to save report.
+        fmt: str, {'txt', 'json'}
+            Output format.
+
+        See Also
+        --------
+        EKG.hrv_stats : Calculate both time and frequency domain HRV statistics on IBI object.
+        EKG.calc_fstats : Calculate commonly used frequency domain HRV statistics.
+        EKG.calc_tstats : Calculate commonly used time domain HRV statistics.
+        EKG.calc_psd_welch : Calculate welch power spectrum.
+        EKG.calc_psd_mt : Calculate multitaper power spectrum.
         """
         # set save directory
         if savedir is None:
@@ -1040,26 +1249,63 @@ class EKG:
             psd_mt_df.to_csv(psdfile, index=False)
 
 
-    ## plotting methods ##
-    def plotpeaks(self, rpeaks=True, ibi=True):
-        """ plot EKG class instance """
+    # plotting methods
+    def plotpeaks(self, rpeaks=True, ibi=True, thres = True):
+        """
+        Plot EKG class instance.
+
+        Visualization of raw EKG data, smoothed EKG data, R peaks, IBI length and EKG threshold detection line.
+        
+        Parameters
+        ----------
+        rpeaks : bool, default True
+            Shows r peaks on plot if set to True.
+        ibi : bool, default True
+            Displays plot with IBI time leading up to each r peak if set to True
+        thres : bool, default True
+            Shows threshold line if set to True.
+        """
         # set number of panels
         if ibi == True:
             plots = ['ekg', 'ibi']
-            data = [self.data, self.rpeaks_df['ibi_ms']]
+            if thres == True:
+                data = [self.data, self.rpeaks_df['ibi_ms']]
+            if thres == False:
+                if self.metadata['analysis_info']['smooth'] == False:
+                    data = [self.data['Raw'], self.rpeaks_df['ibi_ms']]
+                if self.metadata['analysis_info']['smooth'] == True:
+                    data = [self.data[['Raw', 'raw_smooth']], self.rpeaks_df['ibi_ms']]
             
         else:
             plots = ['ekg']
-            data = [self.data]
+            if thres == True:
+                data = [self.data]
+            if thres == False:
+                if self.metadata['analysis_info']['smooth'] == False:
+                    data = [self.data['Raw']]
+                if self.metadata['analysis_info']['smooth'] == True:
+                    data = [self.data[['Raw', 'raw_smooth']]]
 
         fig, axs = plt.subplots(len(plots), 1, sharex=True, figsize = [9.5, 6])
         
         if len(plots) > 1:
             for dat, ax, plot in zip(data, axs, plots):
                 if plot == 'ekg' and rpeaks == True:
-                    ax.plot(dat)
-                    ax.scatter(self.rpeaks.index, self.rpeaks.values, color='red')
+                    ax.plot(dat, zorder = 1)
+                    ax.scatter(self.rpeaks.index, self.rpeaks.values, color='red', zorder = 2)
                     ax.set_ylabel('EKG (mV)')
+                    if thres == True:
+                        if self.metadata['analysis_info']['smooth'] == True:
+                            ax.legend(('raw data', 'threshold line', 'smoothed data', 'rpeak'), fontsize = 'small')
+                        else:
+                            ax.legend(('raw data', 'threshold line', 'rpeak'), fontsize = 'small')
+                    else:
+                        if self.metadata['analysis_info']['smooth'] == True:
+                            ax.legend(('raw data', 'smoothed data', 'rpeak'), fontsize = 'small')
+                        else:
+                            ax.legend(('raw data', 'rpeak'), fontsize = 'small')
+
+
                 elif plot == 'ibi':
                     ax.plot(dat, color='grey', marker='.', markersize=8, markerfacecolor=(0, 0, 0, 0.8), markeredgecolor='None')
                     ax.set_ylabel('Inter-beat interval (ms)')
@@ -1070,8 +1316,8 @@ class EKG:
         else:
             for dat, plot in zip(data, plots):
                 if plot == 'ekg' and rpeaks == True:
-                    axs.plot(dat)
-                    axs.scatter(self.rpeaks.index, self.rpeaks.values, color='red')
+                    axs.plot(dat, zorder = 1)
+                    axs.scatter(self.rpeaks.index, self.rpeaks.values, color='red', zorder = 2)
                     axs.set_ylabel('EKG (mV)')
                     axs.set_xlabel('Time')
                 axs.margins(x=0)
@@ -1082,9 +1328,30 @@ class EKG:
 
 
     def plotPS(self, method='mt', dB=False, bands=True, save=True, savedir=None):
-        """ Plot power spectrum """
+        """
+        Plot power spectrum with method of choice and save if appropriate. 
+
+        Parameters
+        ----------
+        method : str, {'mt', 'welch'}
+            Method by which power spectrum is to be calculated.
+            'mt' is multitaper.
+        dB : bool, default False
+            If True, decibals used as unit for power spectral density instead of s^2/Hz
+        bands : bool, default True
+            If True, spectrum plotted colored by frequency band.
+        save : bool, default True
+            If True, power spectrum will be saved as well as plotted.
+        savedir : str, optional
+            Path to directory where spectrum is to be saved. 
+
+        See Also
+        --------
+        EKG.calc_psd_mt : Calculate multitaper power spectrum.
+        EKG.calc_psd_welch : Calculate welch power spectrum. 
+        """
         
-         # set title
+        # set title
         title = self.metadata['file_info']['in_num'] + ' ' + self.metadata['file_info']['start_date'] + '\n' + self.metadata['file_info']['sleep_stage'] + ' ' + self.metadata['file_info']['cycle']
         try:
             n.metadata['file_info']['epoch']
@@ -1118,17 +1385,11 @@ class EKG:
             # use matplotlib.patches.Patch to make objects for legend w/ data
             ax.plot(psd['freqs'], pwr, color='black', zorder=10)
             
-            yline = SG.LineString(list(zip(psd['freqs'],pwr)))
-            zord_alpha = {0:0.6, 1:0.6, 2:0.8, 3:1.0}
-            
             colors = [None, 'yellow', 'darkorange', 'tomato']
             for (zord, alpha), (key, value), color in zip(self.psd_fband_vals.items(), colors):
                 if value['idx'] is not None:
                     # get intercepts & plot vertical lines for bands
                     xrange = [float(x) for x in self.freq_stats[key]['freq_range'][1:-1].split(",")] 
-                    xline = SG.LineString([(xrange[1], min(pwr)), (xrange[1], max(pwr))])
-                    coords = np.array(xline.intersection(yline))            
-                    ax.vlines(coords[0], 0, coords[1], colors='black', linestyles='dotted', zorder=8)
                     
                     # fill spectra by band
                     ax.fill_between(psd['freqs'], pwr, where = [xrange[0] <= x for x in psd['freqs']], 
@@ -1143,11 +1404,11 @@ class EKG:
         plt.ylabel(ylabel)
         plt.suptitle(title)
 
-        if save:
+        if save == True:
             if savedir is None:
                 print('ERROR: File not saved. Please specify savedir argument.')
             else:
-                savename = os.path.join(savedir, fname.split('.')[0]) + '_psd.png'
+                savename = os.path.join(savedir, self.metadata['file_info']['fname'].split('.')[0]) + '_psd.png'
                 fig.savefig(savename, dpi=300)
 
         return fig
