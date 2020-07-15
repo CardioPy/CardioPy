@@ -35,10 +35,10 @@ Best when run with jupyter notebook. For detailed instructions see (will insert 
 
 In cases where the R peak isn't very pronounced use smaller moving windows as well as low upshift percentages.
 For example in this segment with upshift of 1.7% and moving window of 50ms detection is not optimal.
-![bad_example](https://github.com/CardioPy/CardioPy/tree/master/example_run/advice_images/example_bad_mw.png)
+![bad_example](https://github.com/CardioPy/CardioPy/blob/master/example_run/advice_images/example_bad_mw.PNG)
 
 When changed to a moving window of 20ms R peak detection is accurate.
-![good_example](https://github.com/CardioPy/CardioPy/tree/master/example_run/advice_images/example_good_mw.png)
+![good_example](https://github.com/CardioPy/CardioPy/blob/master/example_run/advice_images/example_good_mw.PNG)
 
 ## Installation
 (Will edit once run it myself to insure details are clear step by step)
