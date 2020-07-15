@@ -2,8 +2,6 @@
 
 A flexibile package for R-peak detection and heart rate variability analysis of single-lead EKG data. <br>
 
-**Note: This is a work in progress. Complete documentation and installation instructions coming soon!**
-
 ## How to use Cardiopy
 Cardiopy can be used in two ways:<br>
    1. __As a preprocessing module for the import and cleaning of clinical EKG data in conjuction
