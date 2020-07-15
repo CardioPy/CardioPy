@@ -33,6 +33,13 @@ __4. HRV statistics export__<br>
 ## Usage
 Best when run with jupyter notebook. For detailed instructions see (will insert how to get to the example jupyter notebook file). (Section to be expanded as I see what can/can't be shown with the notebook file) 
 
+In cases where the R peak isn't very pronounced use smaller moving windows as well as low upshift percentages.
+For example in this segment with upshift of 1.7% and moving window of 50ms detection is not optimal.
+![bad_example](https://github.com/CardioPy/CardioPy/tree/master/example_run/example_bad_mw.png)
+
+When changed to a moving window of 20ms R peak detection is accurate.
+![good_example](https://github.com/CardioPy/CardioPy/tree/master/example_run/example_good_mw.png)
+
 ## Installation
 (Will edit once run it myself to insure details are clear step by step)
 
