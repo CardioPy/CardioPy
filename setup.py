@@ -4,8 +4,8 @@ with open("README.md", "r") as fh:
 	long_description = fh.read()
 
 setuptools.setup(
-	name = 'cardiopy',
-	version = "0.0.1",
+	name = 'CardioPy',
+	version = "0.0.2",
 	author = "Jackie Gottshall",
 	author_email = "jackie.gottshall@gmail.com",
 	description = "Analysis package for single-lead clinical EKG data",
