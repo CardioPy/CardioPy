@@ -32,7 +32,7 @@ __4. HRV statistics export__<br>
 Use the package manager [pip](https://pip.pypa.io/en/stable/) to install CardioPy.
 
 ```bash
-pip install CardioPy
+pip install cardiopy
 ```
 
 ## Usage
