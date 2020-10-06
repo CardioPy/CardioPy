@@ -52,7 +52,8 @@ class EKG:
         Raw EKG value (mV) and corresponding interbeat interval leading up to the data point (ms) at each sampled point.
     """
 
-    def __init__(self, fname, fpath, min_dur=True, epoched=True, smooth=False, sm_wn=30, mw_size=100, upshift=3.5, detect_peaks=True):
+    def __init__(self, fname, fpath, polarity='positive', min_dur=True, epoched=True, smooth=False, sm_wn=30, mw_size=100, upshift=3.5, 
+        rms_align='right', detect_peaks=True):
         """
         Initialize raw EKG object.
 
@@ -62,6 +63,8 @@ class EKG:
             Filename.
         fpath : str
             Path to file.
+        polarity: str, default 'positive'
+            polarity of the R-peak deflection. Options: 'positive', 'negative'
         min_dur : bool, default True
             Only load files that are >= 5 minutes long.
         epoched : bool, default True
@@ -75,6 +78,8 @@ class EKG:
             Moving window size for R peak detection (milliseconds).
         upshift : float, default 3.5
             Detection threshold upshift for R peak detection (% of signal).
+        rms_align: str, default 'right'
+            whether to align the mean to the right or left side of the moving window [options: 'right', 'left']
         rm_artifacts : bool, default False
             Apply IBI artifact removal algorithm.
         detect_peaks : bool, default True
@@ -94,6 +99,7 @@ class EKG:
         self.metadata = {'file_info':{'in_num': in_num,
                                 'fname': fname,
                                 'path': filepath,
+                                'rpeak_polarity': polarity,
                                 'start_date': start_date,
                                 'sleep_stage': slpstage,
                                 'cycle': cycle
@@ -105,6 +111,10 @@ class EKG:
         # load the ekg
         self.load_ekg(min_dur)
 
+        # flip the polarity if R peaks deflections are negative
+        if polarity == 'negative':
+            self.data = self.data*-1
+
         if smooth == True:
             self.rms_smooth(sm_wn)
         else:
@@ -113,7 +123,7 @@ class EKG:
         # detect R peaks
         if detect_peaks == True:
             # detect R peaks & calculate inter-beat intevals
-            self.calc_RR(smooth, mw_size, upshift)
+            self.calc_RR(smooth, mw_size, upshift, rms_align)
 
         register_matplotlib_converters()
         
@@ -172,7 +182,7 @@ class EKG:
         self.data['raw_smooth'] = self.data.Raw.rolling(mw, center=True).mean()
 
 
-    def set_Rthres(self, smooth, mw_size, upshift):
+    def set_Rthres(self, smooth, mw_size, upshift, rms_align):
         """
         Set R peak detection threshold based on moving average shifted up by a percentage of the EKG signal.
         
@@ -184,6 +194,8 @@ class EKG:
             Time over which the moving average of the EKG signal will be taken to calculate the R peak detection threshold (ms).
         upshift : float, default 3.5
             Percentage of EKG signal that the moving average will be shifted up by to set the R peak detection threshold.
+        rms_align: str, default 'right'
+            whether to align the mean to the right or left side of the moving window [options: 'right', 'left']
 
         See Also
         --------
@@ -202,18 +214,22 @@ class EKG:
             mavg = self.data.raw_smooth.rolling(mw).mean()
             ekg_avg = np.mean(self.data['raw_smooth'])
 
+        if rms_align == 'left':
+            # get the number of NaNs and shift the average left by that amount
+            mavg = mavg.shift(-mavg.isna().sum())
         # replace edge nans with overall average
         mavg = mavg.fillna(ekg_avg)
 
         # set detection threshold as +upshift% of moving average
-        upshift_mult = 1 + upshift/100
-        det_thres = mavg*upshift_mult
+        upshift_perc = upshift/100
+        det_thres = mavg + np.abs(mavg*upshift_perc)
         # insert threshold column at consistent position in df to ensure same color for plotting regardless of smoothing
         self.data.insert(1, 'EKG_thres', det_thres) # can remove this for speed, just keep as series
 
         #set metadata
         self.metadata['analysis_info']['mw_size'] = mw_size
         self.metadata['analysis_info']['upshift'] = upshift
+        self.metadata['analysis_info']['rms_align'] = rms_align
 
         # create empy series for false detections removed and missed peaks added
         self.rpeak_artifacts = pd.Series()
@@ -648,7 +664,7 @@ class EKG:
                 print('R peaks dataframe updated.\nDone.')
 
 
-    def calc_RR(self, smooth, mw_size, upshift):
+    def calc_RR(self, smooth, mw_size, upshift, rms_align):
         """
         Set R peak detection threshold, detect R peaks and calculate R-R intervals.
 
@@ -660,6 +676,8 @@ class EKG:
             Time over which the moving average of the EKG signal will be taken to calculate the R peak detection threshold (ms).
         upshift : float, default 3.5
             Percentage of EKG signal that the moving average will be shifted up by to set the R peak detection threshold.
+        rms_align: str, default 'right'
+            whether to align the mean to the right or left side of the moving window [options: 'right', 'left']
 
         See Also
         --------
@@ -668,7 +686,7 @@ class EKG:
         """
         
         # set R peak detection parameters
-        self.set_Rthres(smooth, mw_size, upshift)
+        self.set_Rthres(smooth, mw_size, upshift, rms_align)
         # detect R peaks & make RR tachogram
         self.detect_Rpeaks(smooth)
 
