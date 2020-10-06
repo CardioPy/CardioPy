@@ -37,7 +37,7 @@ pip install cardiopy
 ```
 
 ## Usage
-Best when run with jupyter notebook. For detailed instructions download the [example jupyter notebook file](https://github.com/CardioPy/CardioPy/blob/master/example_run/CardioPy_Example_2020.ipynb) and [de-identified data segment](https://github.com/CardioPy/CardioPy/blob/master/example_run/HCXXX_2001-01-01_awake_cycle1_epoch1_222000.csv) from [github](https://github.com/CardioPy/CardioPy/blob/master/example_run) <br>
+Best when run with jupyter notebook. For detailed instructions download the [example jupyter notebook file](https://github.com/CardioPy/CardioPy/blob/master/example_run/CardioPy_Example_Analysis.ipynb) and [de-identified data segment](https://github.com/CardioPy/CardioPy/blob/master/example_run/HCXXX_2001-01-01_awake_cycle1_epoch1_222000.csv) from [github](https://github.com/CardioPy/CardioPy/blob/master/example_run) <br>
 	*For optimal performance, close figure interactions ('off' button on the top right corner) when finished with each window.*
 
 ### Parameter Optimization & Cleaning Tips
