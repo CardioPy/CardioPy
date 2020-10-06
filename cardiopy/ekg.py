@@ -1120,6 +1120,12 @@ class EKG:
         else:
             self.metadata['analysis_info']['artifacts_rmvd'] = str(str(len(self.rpeak_artifacts)) + ' false peaks (removed); ' + str(len(self.rpeaks_added)) + ' missed peaks (added); ' + str(len(self.ibi_artifacts)) + ' ibis removed (from NaN data)')
 
+        # create nn variable if it doesn't exist
+        try:
+            self.nn
+        except AttributeError:
+            self.nn = self.rr
+
         # calculate statistics
         self.calc_tstats(itype)
         self.calc_fstats(itype, method, bandwidth, window)
@@ -1400,11 +1406,11 @@ class EKG:
         
         # or plot spectrum colored by frequency band
         elif bands == True:
-            # use matplotlib.patches.Patch to make objects for legend w/ data
             ax.plot(psd['freqs'], pwr, color='black', zorder=10)
             
             colors = [None, 'yellow', 'darkorange', 'tomato']
-            for (zord, alpha), (key, value), color in zip(self.psd_fband_vals.items(), colors):
+            zdict = {0:0.6, 1:0.6, 2:0.4, 3:0.6}
+            for (zord, alpha), (key, value), color in zip(zdict.items(), self.psd_fband_vals.items(), colors):
                 if value['idx'] is not None:
                     # get intercepts & plot vertical lines for bands
                     xrange = [float(x) for x in self.freq_stats[key]['freq_range'][1:-1].split(",")] 
