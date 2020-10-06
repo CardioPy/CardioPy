@@ -28,8 +28,15 @@ __4. HRV statistics export__<br>
    * Single-file report exports in json format<br>
    * Multi-file exports into .csv spreadsheets for group statistics<br>
 
+## Installation
+Use the package manager [pip](https://pip.pypa.io/en/stable/) to install CardioPy.
+
+```bash
+pip install cardiopy
+```
+
 ## Usage
-Best when run with jupyter notebook. For detailed instructions see example in CardioPy/example_run/CardioPy_Example_2020.ipynb <br>
+Best when run with jupyter notebook. For detailed instructions download the [example jupyter notebook file](https://github.com/CardioPy/CardioPy/blob/master/example_run/CardioPy_Example_2020.ipynb) and [de-identified data segment](https://github.com/CardioPy/CardioPy/blob/master/example_run/HCXXX_2001-01-01_awake_cycle1_epoch1_222000.csv) from [github](https://github.com/CardioPy/CardioPy/blob/master/example_run) <br>
 	*For optimal performance, close figure interactions ('off' button on the top right corner) when finished with each window.*
 
 ### Parameter Optimization & Cleaning Tips
@@ -39,24 +46,10 @@ Best when run with jupyter notebook. For detailed instructions see example in Ca
 	- Only re-add incorrectly removed peaks with EKG.undo_rm_peak NOT with EKG.add_peak.
 
 * If R peaks are not very pronounced, try: 
-	1. reducing the moving window
+	1. reducing the moving window size
 	2. reducing the upshift percentage
-
-        <b>For example:</b> <br>
-    <p align=center>
-	<b>50ms moving window + 1.7% upshift (Suboptimal)</b>
-        <img src="https://github.com/CardioPy/CardioPy/blob/master/example_run/advice_images/example_bad_mw.PNG">
-        <br><br>
-        <b>20ms moving window + 1.7% upshift (Optimal)</b>
-        <img src="https://github.com/CardioPy/CardioPy/blob/master/example_run/advice_images/example_good_mw.PNG">
-    </p>
-
-## Installation
-Use the package manager [pip](https://pip.pypa.io/en/stable/) to install CardioPy.
-
-```bash
-pip install CardioPy
-```
+	3. both<br>
+        <img src="https://github.com/CardioPy/CardioPy/blob/master/example_run/advice_images/EKG_paramshift_new-edited.png">
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
@@ -65,5 +58,8 @@ Pull requests are welcome. For major changes, please open an issue first to disc
 BSD 3-Clause
 
 ## Roadmap
-The authors plan for the next version of CardioPy to include automatic parameter detection. This would include upshift, moving window and smoothing window suggestions for optimal peak detection. <br>
-Future versions also aim to implement a graphical user interface, as well as support for additional commonly used data formats.
+The authors plan for future versions of CardioPy to include:
+* Support for additional commonly used data formats
+* Automatic parameter detection<br> 
+        - *This would include upshift, moving window and smoothing window suggestions for optimal peak detection*
+* A graphical user interface
