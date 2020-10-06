@@ -50,7 +50,7 @@ Best when run with jupyter notebook. For detailed instructions download the [exa
 	1. changing the moving window size
 	2. changing the upshift percentage
 	3. both<br>
-        <img src="https://github.com/CardioPy/CardioPy/blob/master/example_run/advice_images/EKG_paramshift_new-edited.png">
+        <img src="https://github.com/CardioPy/CardioPy/blob/master/example_run/advice_images/EKG_paramshift.png">
 
 ## Contributing
 Pull requests are welcome! For major changes, please open an issue first to discuss what you would like to change.
