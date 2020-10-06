@@ -1,6 +1,7 @@
 # Cardiopy
 
 A flexibile package for R-peak detection and heart rate variability analysis of single-lead EKG data. <br>
+    <img src="https://github.com/CardioPy/CardioPy/blob/master/example_run/advice_images/example_detections.png">
 
 ## How to use Cardiopy
 Cardiopy can be used in two ways:<br>
@@ -45,14 +46,14 @@ Best when run with jupyter notebook. For detailed instructions download the [exa
 	- Only remove incorrectly added peaks with EKG.undo_add_peak NOT with EKG.rm_peak.
 	- Only re-add incorrectly removed peaks with EKG.undo_rm_peak NOT with EKG.add_peak.
 
-* If R peaks are not very pronounced, try: 
-	1. reducing the moving window size
-	2. reducing the upshift percentage
+* If R peak detections are not accurate, try: 
+	1. changing the moving window size
+	2. changing the upshift percentage
 	3. both<br>
         <img src="https://github.com/CardioPy/CardioPy/blob/master/example_run/advice_images/EKG_paramshift_new-edited.png">
 
 ## Contributing
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+Pull requests are welcome! For major changes, please open an issue first to discuss what you would like to change.
 
 ## License
 BSD 3-Clause
