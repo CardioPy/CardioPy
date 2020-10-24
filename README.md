@@ -2,6 +2,9 @@
 
 A flexibile package for R-peak detection and heart rate variability analysis of single-lead EKG data. <br>
     <img src="https://github.com/CardioPy/CardioPy/blob/master/example_run/advice_images/example_detections.png">
+    
+Full documentation is available [here](https://www.biorxiv.org/content/10.1101/2020.10.06.328856v1). If you use CardioPy or a derivative in your work, please cite: <br>
+Gottshall, J. L., Recoder, N., Schiff, N. D. (2020). CardioPy: An open-source heart rate variability analysis toolkit for single-lead EKG. boiRxv. doi: 10.1101/2020.10.06.328856
 
 ## How to use Cardiopy
 Cardiopy can be used in two ways:<br>
