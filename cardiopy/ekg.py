@@ -127,11 +127,10 @@ class EKG:
 
         # detect R peaks
         if detect_peaks == True:
-            # detect R peaks & calculate inter-beat intevals
-            self.calc_RR(smooth, mw_size, upshift, rms_align)
-        if pan_tompkins == True:
+            if pan_tompkins == True:
                 self.pan_tompkins_detector
-            else:
+            # detect R peaks & calculate inter-beat intevals
+            else: 
                 self.calc_RR(smooth, mw_size, upshift, rms_align)
 
         register_matplotlib_converters()
