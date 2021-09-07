@@ -132,6 +132,7 @@ class EKG:
             # detect R peaks & calculate inter-beat intevals
             else: 
                 self.calc_RR(smooth, mw_size, upshift, rms_align)
+                self.metadata['analysis_info']['pan_tompkins'] = False
 
         register_matplotlib_converters()
         
@@ -699,6 +700,8 @@ class EKG:
         self.detect_Rpeaks(smooth)
 
     def pan_tompkins_detector(self):
+
+        self.metadata['analysis_info']['pan_tompkins'] = True
         #interpolate data because has NaNs, cant for ecg band pass filter step
         data = self.data.interpolate()
         #makes our data a list because that is the format that bsnb wants it in
@@ -1374,16 +1377,19 @@ class EKG:
                     ax.plot(dat, zorder = 1)
                     ax.scatter(self.rpeaks.index, self.rpeaks.values, color='red', zorder = 2)
                     ax.set_ylabel('EKG (mV)')
-                    if thres == True:
-                        if self.metadata['analysis_info']['smooth'] == True:
-                            ax.legend(('raw data', 'threshold line', 'smoothed data', 'rpeak'), fontsize = 'small')
-                        else:
-                            ax.legend(('raw data', 'threshold line', 'rpeak'), fontsize = 'small')
+                    if self.metadata['analysis_info']['pan_tompkins'] == True:
+                        ax.legend(('raw data', 'rpeak'), fontsize = 'small')
                     else:
-                        if self.metadata['analysis_info']['smooth'] == True:
-                            ax.legend(('raw data', 'smoothed data', 'rpeak'), fontsize = 'small')
+                        if thres == True:
+                            if self.metadata['analysis_info']['smooth'] == True:
+                                ax.legend(('raw data', 'threshold line', 'smoothed data', 'rpeak'), fontsize = 'small')
+                            else:
+                                ax.legend(('raw data', 'threshold line', 'rpeak'), fontsize = 'small')
                         else:
-                            ax.legend(('raw data', 'rpeak'), fontsize = 'small')
+                            if self.metadata['analysis_info']['smooth'] == True:
+                                ax.legend(('raw data', 'smoothed data', 'rpeak'), fontsize = 'small')
+                            else:
+                                ax.legend(('raw data', 'rpeak'), fontsize = 'small')
 
 
                 elif plot == 'ibi':
