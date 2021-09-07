@@ -20,6 +20,9 @@ import os
 import pandas as pd 
 import scipy as sp
 import statistics
+import biosignalsnotebooks as bsnb
+from scipy import interpolate
+from numpy import linspace, diff, zeros_like, arange, array
 
 from mne.time_frequency import psd_array_multitaper
 from pandas.plotting import register_matplotlib_converters
