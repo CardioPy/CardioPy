@@ -128,7 +128,7 @@ class EKG:
         # detect R peaks
         if detect_peaks == True:
             if pan_tompkins == True:
-                self.pan_tompkins_detector
+                self.pan_tompkins_detector()
             # detect R peaks & calculate inter-beat intevals
             else: 
                 self.calc_RR(smooth, mw_size, upshift, rms_align)
@@ -697,6 +697,54 @@ class EKG:
         self.set_Rthres(smooth, mw_size, upshift, rms_align)
         # detect R peaks & make RR tachogram
         self.detect_Rpeaks(smooth)
+
+    def pan_tompkins_detector(self):
+        #interpolate data because has NaNs, cant for ecg band pass filter step
+        data = self.data.interpolate()
+        #makes our data a list because that is the format that bsnb wants it in
+        signal = pd.Series.tolist(data['Raw'])
+        # get sample rate 
+        # must be an int
+        sr = int(self.metadata['analysis_info']['s_freq'])
+        
+        filtered_signal = bsnb.detect._ecg_band_pass_filter(signal, sr) #Step 1 of Pan-Tompkins Algorithm - ECG Filtering (Bandpass between 5 and 15 Hz)
+        differentiated_signal = diff(filtered_signal)
+        squared_signal = differentiated_signal * differentiated_signal
+        nbr_sampls_int_wind = int(0.080 * sr)
+        # Initialisation of the variable that will contain the integrated signal samples
+        integrated_signal = zeros_like(squared_signal)
+        cumulative_sum = squared_signal.cumsum()
+        integrated_signal[nbr_sampls_int_wind:] = (cumulative_sum[nbr_sampls_int_wind:] - cumulative_sum[:-nbr_sampls_int_wind]) / nbr_sampls_int_wind
+        integrated_signal[:nbr_sampls_int_wind] = cumulative_sum[:nbr_sampls_int_wind] / arange(1, nbr_sampls_int_wind + 1)
+
+        #R peak detection algorithm
+        rr_buffer, signal_peak_1, noise_peak_1, threshold = bsnb.detect._buffer_ini(integrated_signal, sr)
+        probable_peaks, possible_peaks= bsnb.detect._detects_peaks(integrated_signal, sr)
+        #Identification of definitive R peaks
+        definitive_peaks = bsnb.detect._checkup(probable_peaks, integrated_signal, sr, rr_buffer, signal_peak_1, noise_peak_1, threshold)
+
+        # Conversion to integer type.
+        definitive_peaks = array(list(map(int, definitive_peaks)))
+        #Correcting step
+        #Due to the multiple pre-processing stages there is a small lag in the determined peak positions, which needs to be corrected !
+        definitive_peaks_rephase = np.array(definitive_peaks) - 30 * (sr / 1000)
+        definitive_peaks_rephase = list(map(int, definitive_peaks_rephase))
+        #make peaks list
+        index = data.index[definitive_peaks_rephase]
+        values = np.array(signal)[definitive_peaks_rephase]
+        self.rpeaks = pd.Series(values, index = index)
+        print('R peak detection complete')
+
+        # get time between peaks and convert to mseconds
+        self.rr = np.diff(self.rpeaks.index)/np.timedelta64(1, 'ms')
+        
+        # create rpeaks dataframe and add ibi columm
+        rpeaks_df = pd.DataFrame(self.rpeaks)
+        ibi = np.insert(self.rr, 0, np.NaN)
+        rpeaks_df['ibi_ms'] = ibi
+        self.rpeaks_df = rpeaks_df
+
+        print('R-R intervals calculated')
 
     def export_RR(self, savedir):
         """
