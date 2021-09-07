@@ -21,9 +21,9 @@ import pandas as pd
 import scipy as sp
 import statistics
 import biosignalsnotebooks as bsnb
+
 from scipy import interpolate
 from numpy import linspace, diff, zeros_like, arange, array
-
 from mne.time_frequency import psd_array_multitaper
 from pandas.plotting import register_matplotlib_converters
 from scipy.signal import welch
@@ -56,7 +56,7 @@ class EKG:
     """
 
     def __init__(self, fname, fpath, polarity='positive', min_dur=True, epoched=True, smooth=False, sm_wn=30, mw_size=100, upshift=3.5, 
-        rms_align='right', detect_peaks=True):
+        rms_align='right', detect_peaks=True, pan_tompkins=True):
         """
         Initialize raw EKG object.
 
@@ -87,6 +87,8 @@ class EKG:
             Apply IBI artifact removal algorithm.
         detect_peaks : bool, default True
             Option to detect R peaks and calculate interbeat intervals.
+        pan_tompkins : bool, default True
+            Option to detect R peaks using automatic pan tompkins detection method
 
         Returns
         -------
@@ -127,6 +129,10 @@ class EKG:
         if detect_peaks == True:
             # detect R peaks & calculate inter-beat intevals
             self.calc_RR(smooth, mw_size, upshift, rms_align)
+        if pan_tompkins == True:
+                self.pan_tompkins_detector
+            else:
+                self.calc_RR(smooth, mw_size, upshift, rms_align)
 
         register_matplotlib_converters()
         
