@@ -125,6 +125,11 @@ class EKG:
         else:
            self.metadata['analysis_info']['smooth'] = False
 
+        # create empty series for false detections removed and missed peaks added
+        self.rpeak_artifacts = pd.Series()
+        self.rpeaks_added = pd.Series()
+        self.ibi_artifacts = pd.Series()
+        
         # detect R peaks
         if detect_peaks == True:
             if pan_tompkins == True:
@@ -136,6 +141,8 @@ class EKG:
 
         register_matplotlib_converters()
         
+
+
         
     def load_ekg(self, min_dur):
         """ 
@@ -239,11 +246,6 @@ class EKG:
         self.metadata['analysis_info']['mw_size'] = mw_size
         self.metadata['analysis_info']['upshift'] = upshift
         self.metadata['analysis_info']['rms_align'] = rms_align
-
-        # create empy series for false detections removed and missed peaks added
-        self.rpeak_artifacts = pd.Series()
-        self.rpeaks_added = pd.Series()
-        self.ibi_artifacts = pd.Series()
 
     def detect_Rpeaks(self, smooth):
         """ 
