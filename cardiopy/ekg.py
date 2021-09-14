@@ -129,7 +129,7 @@ class EKG:
         self.rpeak_artifacts = pd.Series()
         self.rpeaks_added = pd.Series()
         self.ibi_artifacts = pd.Series()
-        
+
         # detect R peaks
         if detect_peaks == True:
             if pan_tompkins == True:
@@ -825,7 +825,10 @@ class EKG:
         print('IBI artifacts exported.')
 
         # save RR intervals
-        rr_header = 'R peak detection mw_size = {} & upshift = {}'.format(self.metadata['analysis_info']['mw_size'], self.metadata['analysis_info']['upshift'])
+        if self.pan_tompkins == False:
+            rr_header = 'R peak detection mw_size = {} & upshift = {}'.format(self.metadata['analysis_info']['mw_size'], self.metadata['analysis_info']['upshift'])
+        else:
+            rr_header = 'R peak detection using the Pan Tompkins algorithm'
         saverr = self.metadata['file_info']['fname'].split('.')[0] + '_rr.txt'
         rr_file = os.path.join(savedir, saverr)
         np.savetxt(rr_file, self.rr, header=rr_header, fmt='%.0f', delimiter='\n')
