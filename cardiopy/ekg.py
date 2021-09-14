@@ -694,6 +694,7 @@ class EKG:
         --------
         EKG.set_Rthres : Set R peak detection threshold based on moving average shifted up by a percentage of the EKG signal.
         EKG.detect_Rpeaks :  Detect R peaks of raw or smoothed EKG signal based on detection threshold. 
+        EKG.pan_tompkins_detector : Use the Pan Tompkins algorithm to detect R peaks and calculate R-R intervals.
         """
         
         # set R peak detection parameters
@@ -702,6 +703,18 @@ class EKG:
         self.detect_Rpeaks(smooth)
 
     def pan_tompkins_detector(self):
+        """
+        Use the Pan Tompkins algorithm to detect R peaks and calculate R-R intervals.
+
+        Jiapu Pan and Willis J. Tompkins.
+        A Real-Time QRS Detection Algorithm. 
+        In: IEEE Transactions on Biomedical Engineering 
+        BME-32.3 (1985), pp. 230–236.
+
+        See Also
+        ----------
+        EKG.calc_RR : Set R peak detection threshold, detect R peaks and calculate R-R intervals.
+        """
 
         self.metadata['analysis_info']['pan_tompkins'] = True
         #interpolate data because has NaNs, cant for ecg band pass filter step
