@@ -825,7 +825,7 @@ class EKG:
         print('IBI artifacts exported.')
 
         # save RR intervals
-        if self.pan_tompkins == False:
+        if self.metadata['analysis_info']['pan_tompkins'] = False:
             rr_header = 'R peak detection mw_size = {} & upshift = {}'.format(self.metadata['analysis_info']['mw_size'], self.metadata['analysis_info']['upshift'])
         else:
             rr_header = 'R peak detection using the Pan Tompkins algorithm'
