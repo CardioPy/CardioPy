@@ -28,6 +28,7 @@ setuptools.setup(
 		"scipy",
 		"statistics",
 		"mne",
-		"numpy"
+		"numpy",
+                "biosignalsnotebooks"
 	]
 	)
