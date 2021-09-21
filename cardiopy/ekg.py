@@ -138,11 +138,12 @@ class EKG:
             else: 
                 self.calc_RR(smooth, mw_size, upshift, rms_align)
                 self.metadata['analysis_info']['pan_tompkins'] = False
+        
+        # initialize the nn object
+        self.nn = self.rr
 
         register_matplotlib_converters()
         
-
-
         
     def load_ekg(self, min_dur):
         """ 
@@ -342,8 +343,6 @@ class EKG:
         print('\n')
         if rm_peak == 'None':
             print('No peaks removed.')
-            # create nn attribute
-            self.nn = self.rr
             return
         else:
             rm_peaks = rm_peak.split(',')
@@ -419,8 +418,6 @@ class EKG:
         print('\n')
         if add_peak == 'None':
             print('No peaks added.')
-            # create nn attribute
-            self.nn = self.rr
             return
         else:
             add_peaks = add_peak.split(',')
@@ -567,8 +564,6 @@ class EKG:
         print('\n')
         if rm_peak == 'None':
             print('No peaks removed.')
-            # create nn attribute
-            self.nn = self.rr
             return
         else:
             rm_peaks = rm_peak.split(',')
