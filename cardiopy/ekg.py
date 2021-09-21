@@ -856,7 +856,10 @@ class EKG:
                 arts_len = 0
             else:
                 arts_len = len(self.rpeak_artifacts) + len(self.ibi_artifacts)
-            nn_header = 'R peak detection mw_size = {} & upshift = {}.\nTotal artifacts removed = {} ( {} false peaks + {} false ibis).'.format(self.metadata['analysis_info']['mw_size'], self.metadata['analysis_info']['upshift'], arts_len, len(self.rpeak_artifacts), len(self.ibi_artifacts))
+            if self.metadata['analysis_info']['pan_tompkins'] == False:
+                nn_header = 'R peak detection mw_size = {} & upshift = {}.\nTotal artifacts removed = {} ( {} false peaks + {} false ibis).'.format(self.metadata['analysis_info']['mw_size'], self.metadata['analysis_info']['upshift'], arts_len, len(self.rpeak_artifacts), len(self.ibi_artifacts))
+            else:
+                nn_header = 'R peak detection using the Pan Tompkins algorithm.\nTotal artifacts removed = {} ( {} false peaks + {} false ibis).'.format(arts_len, len(self.rpeak_artifacts), len(self.ibi_artifacts))
             savenn = self.metadata['file_info']['fname'].split('.')[0] + '_nn.txt'
             nn_file = os.path.join(savedir, savenn)
             np.savetxt(nn_file, self.nn, header=nn_header, fmt='%.0f', delimiter='\n')
