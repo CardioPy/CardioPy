@@ -15,7 +15,8 @@ Cardiopy can be used in two ways:<br>
 ## Features
 __1. Data preprocessing and cleaning__<br>
    * Load single-lead EKG data<br>
-   * Detect R-peaks with flexible thresholding parameters for adjustment to noisy data and varying amplitudes<br>
+   * Detect R-peaks using the Pan Tompkins method
+      - Option to detect R-peaks with flexible thresholding parameters for adjustment to noisy data and varying amplitudes<br>
 		- Option to filter especially noisy data prior to peak detection<br>
    * Built-in detection visualization methods<br>
    * Simple artifact removal methods for manual inspection of detected peaks<br>
@@ -64,6 +65,4 @@ BSD 3-Clause
 ## Roadmap
 The authors plan for future versions of CardioPy to include:
 * Support for additional commonly used data formats
-* Automatic parameter detection<br> 
-        - *This would include upshift, moving window and smoothing window suggestions for optimal peak detection*
 * A graphical user interface

@@ -20,7 +20,10 @@ import os
 import pandas as pd 
 import scipy as sp
 import statistics
+import biosignalsnotebooks as bsnb
 
+from scipy import interpolate
+from numpy import linspace, diff, zeros_like, arange, array
 from mne.time_frequency import psd_array_multitaper
 from pandas.plotting import register_matplotlib_converters
 from scipy.signal import welch
@@ -53,7 +56,7 @@ class EKG:
     """
 
     def __init__(self, fname, fpath, polarity='positive', min_dur=True, epoched=True, smooth=False, sm_wn=30, mw_size=100, upshift=3.5, 
-        rms_align='right', detect_peaks=True):
+        rms_align='right', detect_peaks=True, pan_tompkins=True):
         """
         Initialize raw EKG object.
 
@@ -84,6 +87,8 @@ class EKG:
             Apply IBI artifact removal algorithm.
         detect_peaks : bool, default True
             Option to detect R peaks and calculate interbeat intervals.
+        pan_tompkins : bool, default True
+            Option to detect R peaks using automatic pan tompkins detection method
 
         Returns
         -------
@@ -120,10 +125,22 @@ class EKG:
         else:
            self.metadata['analysis_info']['smooth'] = False
 
+        # create empty series for false detections removed and missed peaks added
+        self.rpeak_artifacts = pd.Series()
+        self.rpeaks_added = pd.Series()
+        self.ibi_artifacts = pd.Series()
+
         # detect R peaks
         if detect_peaks == True:
+            if pan_tompkins == True:
+                self.pan_tompkins_detector()
             # detect R peaks & calculate inter-beat intevals
-            self.calc_RR(smooth, mw_size, upshift, rms_align)
+            else: 
+                self.calc_RR(smooth, mw_size, upshift, rms_align)
+                self.metadata['analysis_info']['pan_tompkins'] = False
+        
+        # initialize the nn object
+        self.nn = self.rr
 
         register_matplotlib_converters()
         
@@ -231,11 +248,6 @@ class EKG:
         self.metadata['analysis_info']['upshift'] = upshift
         self.metadata['analysis_info']['rms_align'] = rms_align
 
-        # create empy series for false detections removed and missed peaks added
-        self.rpeak_artifacts = pd.Series()
-        self.rpeaks_added = pd.Series()
-        self.ibi_artifacts = pd.Series()
-
     def detect_Rpeaks(self, smooth):
         """ 
         Detect R peaks of raw or smoothed EKG signal based on detection threshold. 
@@ -331,8 +343,6 @@ class EKG:
         print('\n')
         if rm_peak == 'None':
             print('No peaks removed.')
-            # create nn attribute
-            self.nn = self.rr
             return
         else:
             rm_peaks = rm_peak.split(',')
@@ -408,8 +418,6 @@ class EKG:
         print('\n')
         if add_peak == 'None':
             print('No peaks added.')
-            # create nn attribute
-            self.nn = self.rr
             return
         else:
             add_peaks = add_peak.split(',')
@@ -556,8 +564,6 @@ class EKG:
         print('\n')
         if rm_peak == 'None':
             print('No peaks removed.')
-            # create nn attribute
-            self.nn = self.rr
             return
         else:
             rm_peaks = rm_peak.split(',')
@@ -683,12 +689,75 @@ class EKG:
         --------
         EKG.set_Rthres : Set R peak detection threshold based on moving average shifted up by a percentage of the EKG signal.
         EKG.detect_Rpeaks :  Detect R peaks of raw or smoothed EKG signal based on detection threshold. 
+        EKG.pan_tompkins_detector : Use the Pan Tompkins algorithm to detect R peaks and calculate R-R intervals.
         """
         
         # set R peak detection parameters
         self.set_Rthres(smooth, mw_size, upshift, rms_align)
         # detect R peaks & make RR tachogram
         self.detect_Rpeaks(smooth)
+
+    def pan_tompkins_detector(self):
+        """
+        Use the Pan Tompkins algorithm to detect R peaks and calculate R-R intervals.
+
+        Jiapu Pan and Willis J. Tompkins.
+        A Real-Time QRS Detection Algorithm. 
+        In: IEEE Transactions on Biomedical Engineering 
+        BME-32.3 (1985), pp. 230–236.
+
+        See Also
+        ----------
+        EKG.calc_RR : Set R peak detection threshold, detect R peaks and calculate R-R intervals.
+        """
+
+        self.metadata['analysis_info']['pan_tompkins'] = True
+        #interpolate data because has NaNs, cant for ecg band pass filter step
+        data = self.data.interpolate()
+        #makes our data a list because that is the format that bsnb wants it in
+        signal = pd.Series.tolist(data['Raw'])
+        # get sample rate 
+        # must be an int
+        sr = int(self.metadata['analysis_info']['s_freq'])
+        
+        filtered_signal = bsnb.detect._ecg_band_pass_filter(signal, sr) #Step 1 of Pan-Tompkins Algorithm - ECG Filtering (Bandpass between 5 and 15 Hz)
+        differentiated_signal = diff(filtered_signal)
+        squared_signal = differentiated_signal * differentiated_signal
+        nbr_sampls_int_wind = int(0.080 * sr)
+        # Initialisation of the variable that will contain the integrated signal samples
+        integrated_signal = zeros_like(squared_signal)
+        cumulative_sum = squared_signal.cumsum()
+        integrated_signal[nbr_sampls_int_wind:] = (cumulative_sum[nbr_sampls_int_wind:] - cumulative_sum[:-nbr_sampls_int_wind]) / nbr_sampls_int_wind
+        integrated_signal[:nbr_sampls_int_wind] = cumulative_sum[:nbr_sampls_int_wind] / arange(1, nbr_sampls_int_wind + 1)
+
+        #R peak detection algorithm
+        rr_buffer, signal_peak_1, noise_peak_1, threshold = bsnb.detect._buffer_ini(integrated_signal, sr)
+        probable_peaks, possible_peaks= bsnb.detect._detects_peaks(integrated_signal, sr)
+        #Identification of definitive R peaks
+        definitive_peaks = bsnb.detect._checkup(probable_peaks, integrated_signal, sr, rr_buffer, signal_peak_1, noise_peak_1, threshold)
+
+        # Conversion to integer type.
+        definitive_peaks = array(list(map(int, definitive_peaks)))
+        #Correcting step
+        #Due to the multiple pre-processing stages there is a small lag in the determined peak positions, which needs to be corrected !
+        definitive_peaks_rephase = np.array(definitive_peaks) - 30 * (sr / 1000)
+        definitive_peaks_rephase = list(map(int, definitive_peaks_rephase))
+        #make peaks list
+        index = data.index[definitive_peaks_rephase]
+        values = np.array(signal)[definitive_peaks_rephase]
+        self.rpeaks = pd.Series(values, index = index)
+        print('R peak detection complete')
+
+        # get time between peaks and convert to mseconds
+        self.rr = np.diff(self.rpeaks.index)/np.timedelta64(1, 'ms')
+        
+        # create rpeaks dataframe and add ibi columm
+        rpeaks_df = pd.DataFrame(self.rpeaks)
+        ibi = np.insert(self.rr, 0, np.NaN)
+        rpeaks_df['ibi_ms'] = ibi
+        self.rpeaks_df = rpeaks_df
+
+        print('R-R intervals calculated')
 
     def export_RR(self, savedir):
         """
@@ -764,7 +833,10 @@ class EKG:
         print('IBI artifacts exported.')
 
         # save RR intervals
-        rr_header = 'R peak detection mw_size = {} & upshift = {}'.format(self.metadata['analysis_info']['mw_size'], self.metadata['analysis_info']['upshift'])
+        if self.metadata['analysis_info']['pan_tompkins'] == False:
+            rr_header = 'R peak detection mw_size = {} & upshift = {}'.format(self.metadata['analysis_info']['mw_size'], self.metadata['analysis_info']['upshift'])
+        else:
+            rr_header = 'R peak detection using the Pan Tompkins algorithm'
         saverr = self.metadata['file_info']['fname'].split('.')[0] + '_rr.txt'
         rr_file = os.path.join(savedir, saverr)
         np.savetxt(rr_file, self.rr, header=rr_header, fmt='%.0f', delimiter='\n')
@@ -784,7 +856,10 @@ class EKG:
                 arts_len = 0
             else:
                 arts_len = len(self.rpeak_artifacts) + len(self.ibi_artifacts)
-            nn_header = 'R peak detection mw_size = {} & upshift = {}.\nTotal artifacts removed = {} ( {} false peaks + {} false ibis).'.format(self.metadata['analysis_info']['mw_size'], self.metadata['analysis_info']['upshift'], arts_len, len(self.rpeak_artifacts), len(self.ibi_artifacts))
+            if self.metadata['analysis_info']['pan_tompkins'] == False:
+                nn_header = 'R peak detection mw_size = {} & upshift = {}.\nTotal artifacts removed = {} ( {} false peaks + {} false ibis).'.format(self.metadata['analysis_info']['mw_size'], self.metadata['analysis_info']['upshift'], arts_len, len(self.rpeak_artifacts), len(self.ibi_artifacts))
+            else:
+                nn_header = 'R peak detection using the Pan Tompkins algorithm.\nTotal artifacts removed = {} ( {} false peaks + {} false ibis).'.format(arts_len, len(self.rpeak_artifacts), len(self.ibi_artifacts))
             savenn = self.metadata['file_info']['fname'].split('.')[0] + '_nn.txt'
             nn_file = os.path.join(savedir, savenn)
             np.savetxt(nn_file, self.nn, header=nn_header, fmt='%.0f', delimiter='\n')
@@ -1318,16 +1393,19 @@ class EKG:
                     ax.plot(dat, zorder = 1)
                     ax.scatter(self.rpeaks.index, self.rpeaks.values, color='red', zorder = 2)
                     ax.set_ylabel('EKG (mV)')
-                    if thres == True:
-                        if self.metadata['analysis_info']['smooth'] == True:
-                            ax.legend(('raw data', 'threshold line', 'smoothed data', 'rpeak'), fontsize = 'small')
-                        else:
-                            ax.legend(('raw data', 'threshold line', 'rpeak'), fontsize = 'small')
+                    if self.metadata['analysis_info']['pan_tompkins'] == True:
+                        ax.legend(('raw data', 'rpeak'), fontsize = 'small')
                     else:
-                        if self.metadata['analysis_info']['smooth'] == True:
-                            ax.legend(('raw data', 'smoothed data', 'rpeak'), fontsize = 'small')
+                        if thres == True:
+                            if self.metadata['analysis_info']['smooth'] == True:
+                                ax.legend(('raw data', 'threshold line', 'smoothed data', 'rpeak'), fontsize = 'small')
+                            else:
+                                ax.legend(('raw data', 'threshold line', 'rpeak'), fontsize = 'small')
                         else:
-                            ax.legend(('raw data', 'rpeak'), fontsize = 'small')
+                            if self.metadata['analysis_info']['smooth'] == True:
+                                ax.legend(('raw data', 'smoothed data', 'rpeak'), fontsize = 'small')
+                            else:
+                                ax.legend(('raw data', 'rpeak'), fontsize = 'small')
 
 
                 elif plot == 'ibi':
