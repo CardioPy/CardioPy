@@ -138,11 +138,12 @@ class EKG:
             else: 
                 self.calc_RR(smooth, mw_size, upshift, rms_align)
                 self.metadata['analysis_info']['pan_tompkins'] = False
+        
+        # initialize the nn object
+        self.nn = self.rr
 
         register_matplotlib_converters()
         
-
-
         
     def load_ekg(self, min_dur):
         """ 
@@ -342,8 +343,6 @@ class EKG:
         print('\n')
         if rm_peak == 'None':
             print('No peaks removed.')
-            # create nn attribute
-            self.nn = self.rr
             return
         else:
             rm_peaks = rm_peak.split(',')
@@ -419,8 +418,6 @@ class EKG:
         print('\n')
         if add_peak == 'None':
             print('No peaks added.')
-            # create nn attribute
-            self.nn = self.rr
             return
         else:
             add_peaks = add_peak.split(',')
@@ -567,8 +564,6 @@ class EKG:
         print('\n')
         if rm_peak == 'None':
             print('No peaks removed.')
-            # create nn attribute
-            self.nn = self.rr
             return
         else:
             rm_peaks = rm_peak.split(',')
@@ -861,7 +856,10 @@ class EKG:
                 arts_len = 0
             else:
                 arts_len = len(self.rpeak_artifacts) + len(self.ibi_artifacts)
-            nn_header = 'R peak detection mw_size = {} & upshift = {}.\nTotal artifacts removed = {} ( {} false peaks + {} false ibis).'.format(self.metadata['analysis_info']['mw_size'], self.metadata['analysis_info']['upshift'], arts_len, len(self.rpeak_artifacts), len(self.ibi_artifacts))
+            if self.metadata['analysis_info']['pan_tompkins'] == False:
+                nn_header = 'R peak detection mw_size = {} & upshift = {}.\nTotal artifacts removed = {} ( {} false peaks + {} false ibis).'.format(self.metadata['analysis_info']['mw_size'], self.metadata['analysis_info']['upshift'], arts_len, len(self.rpeak_artifacts), len(self.ibi_artifacts))
+            else:
+                nn_header = 'R peak detection using the Pan Tompkins algorithm.\nTotal artifacts removed = {} ( {} false peaks + {} false ibis).'.format(arts_len, len(self.rpeak_artifacts), len(self.ibi_artifacts))
             savenn = self.metadata['file_info']['fname'].split('.')[0] + '_nn.txt'
             nn_file = os.path.join(savedir, savenn)
             np.savetxt(nn_file, self.nn, header=nn_header, fmt='%.0f', delimiter='\n')
