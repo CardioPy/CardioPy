@@ -3,4 +3,4 @@ v0.0.2, 7-20-2020 -- Updated setup.py to reflect the BSD-3 Clause license
 v0.0.3, 7-27-2020 -- Updated setup.py to fix installation bug
 v0.0.4, 7-29-2020 -- Changed CardioPy to lowercase
 v0.0.5, 10-06-2020 -- Added support for signals with inverted Rpeak polarity
-v1.0.0, 9-16-2021 -- Added automatic R peak detection using the Pan Tompkins method
+v1.0.0, 10-04-2021 -- Added automatic R peak detection using the Pan Tompkins method
