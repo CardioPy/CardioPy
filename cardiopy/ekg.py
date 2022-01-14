@@ -971,7 +971,80 @@ class EKG:
         self.ii_interp = f_interp(t_interp)
         self.metadata['analysis_info']['s_freq_interp'] = self.metadata['analysis_info']['s_freq']
 
+    def data_pre_processing(fs):
+        
+        # remove the time intervals that are not valid
+        NN_intervals = self.nn[~np.isnan(NN_intervals)]
 
+        spike_times = np.cumsum(NN_intervals)/1000
+
+        dt = 1/fs 
+        T = np.floor(spike_times.max(0)) # Observation duration in seconds
+        t = np.arange(1.0, T, dt) # Consider a linearly spaced time axis
+
+        # Derive the linearly interpolated NN time series
+        NN_intervals_interpolated = np.interp(t,spike_times,NN_intervals)
+        K = NN_intervals_interpolated.shape[0]
+
+        # Zero centering the time series prior to multi-tapering
+        NN_intervals_interpolated = NN_intervals_interpolated - np.mean(NN_intervals_interpolated)
+        NN_intervals_interpolated = NN_intervals_interpolated.reshape((K,1))
+        return NN_intervals_interpolated
+    
+    def Denoised_MT_Spectral_Estimation(NN_intervals_interpolated, N, NW, no_of_tapers):
+        
+        # Initializing the parameters
+        iter_EM = 50 # Maximum EM iterations
+        Q_initial_factor = 10**(5) # Initialization of Q
+        sigma_observation = 1*10**(4) # Initialization of Observation noise variance
+        Sequences = scipy.signal.windows.dpss(K, NW, Kmax=no_of_tapers) # Generate the data tapers used for multitapering
+
+        # constructing the inverse FFT matrix (A)
+        A=np.zeros((K,2*N))
+        for k in range(0,K):
+            for n in range(0,N):
+                A[k,2*n] = np.cos((k+1)*np.pi*(n)/N)
+                A[k,2*n+1] = -np.sin((k+1)*np.pi*(n)/N)
+        A= A/N
+        A = np.delete(A, 1, 1)
+        
+        Denoised_MT_est_tapers = np.zeros((N, no_of_tapers)) # Stores the Denoised Eigen spectra for each taper
+        Denoised_w_est_tapers = np.zeros(((2*N - 1),no_of_tapers)) # Stores the Denoised Eigen coefficients for each taper
+
+        # Derive the denoised Eigen coefficients for each taper using Expectation Maximization
+        for taper in range(0,no_of_tapers):
+            print("Estimating denoised Eigen-coefficients for taper", taper+1)
+            Q = Q_initial_factor*np.eye((2*N - 1)) # Initialize the Q matrix
+            taper_sequence = Sequences[taper,:]
+            taper_sequence = taper_sequence.reshape((K,1))    
+            tapered_NN_intervals = taper_sequence*NN_intervals_interpolated # Obtain the tapered time series
+            tapered_NN_intervals = tapered_NN_intervals.reshape((K,1))
+            w_est = np.zeros((2*N-1, 1))
+            P_est = np.zeros((2*N-1, 2*N-1))
+
+            # Expectation Maximization
+            for r in range(0,iter_EM):
+                # Expectation step (E - step)
+                w_est = np.linalg.pinv(A.T@A + np.linalg.pinv(Q)*sigma_observation)@(A.T@tapered_NN_intervals) # Update the expected value of the denoised Eigen coefficients
+                P_est =  ((np.linalg.pinv(A.T@A/sigma_observation + np.linalg.pinv(Q)))) # Update the covariance of the denoised Eigen coefficients
+                # Maximization (M - step)
+                Q = np.diag(np.diag(P_est + w_est@w_est.T)) # Update the Q matrix
+                sigma_observation = (tapered_NN_intervals.T@tapered_NN_intervals - 2*tapered_NN_intervals.T@A@w_est + np.trace((A.T)@(A)@(P_est + w_est@w_est.T)))/K # Update the observation noise variance
+               # print(sigma_observation)                               
+
+            # Store estimated denoised Eigen coefficients for all tapers
+            Denoised_w_est_tapers[:,taper] = w_est[:,0]
+
+            # Derive and store the denoised Eigen spectra
+            final_eigen_spectra = w_est@w_est.T
+            Denoised_MT_est_tapers[0,taper] = final_eigen_spectra[0,0]
+            for n in range(1,N):
+                Denoised_MT_est_tapers[n,taper] =  final_eigen_spectra[2*n-1,2*n-1] + final_eigen_spectra[2*n,2*n]
+
+        # The final multi-taper estimates are the average spectral estimates across all tapers
+        Denoised_MT_est = np.mean(np.absolute(Denoised_MT_est_tapers), axis=1, keepdims = True)
+        
+        return Denoised_MT_est, Denoised_w_est_tapers                           
     def calc_psd_welch(self, itype, window):
         """ 
         Calculate welch power spectrum.
