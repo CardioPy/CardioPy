@@ -1044,7 +1044,30 @@ class EKG:
         # The final multi-taper estimates are the average spectral estimates across all tapers
         Denoised_MT_est = np.mean(np.absolute(Denoised_MT_est_tapers), axis=1, keepdims = True)
         
-        return Denoised_MT_est, Denoised_w_est_tapers                           
+        return Denoised_MT_est, Denoised_w_est_tapers   
+
+    def Direct_MT_Spectral_Estimation(NN_intervals_interpolated, N, NW, no_of_tapers):
+    
+        # Initializing variables
+        K = NN_intervals_interpolated.shape[0] # Observation duration in samples
+        Fourier_est = np.zeros((2*N, no_of_tapers),dtype=complex) # Eigen Spectra
+        Direct_MT_est_tapers = np.zeros((2*N,no_of_tapers)) # Classical Multi-taper spectral estimate
+        Direct_w_est_tapers = np.zeros((2*N-1,no_of_tapers)) # The real and imaginery components of the Eigen-coefficients for each taper
+        dpss_seq = scipy.signal.windows.dpss(K, NW, Kmax=no_of_tapers) # Generate the data tapers used for multitapering
+
+        # Computing the Eigen-coefficients and the Eigenspectra for each taper
+        for taper in range(0,no_of_tapers):
+            temp = NN_intervals_interpolated.T*dpss_seq[taper,:]
+            Fourier_est[:, taper] = ((np.fft.fft(temp, n = 2*N)).T).reshape((2*N,)) # Eigen-coefficients of the tapered process
+            Direct_w_est_tapers[0,taper] = np.absolute(Fourier_est[0,taper]) # dc component
+            Direct_w_est_tapers[1:2*N-1:2,taper] = np.real(Fourier_est[1:N,taper]) # real components
+            Direct_w_est_tapers[2:2*N-1:2,taper] = np.imag(Fourier_est[1:N,taper]) # imaginary components
+            Direct_MT_est_tapers[:,taper] = (np.absolute(Fourier_est[:, taper]))**2 # Eigenspectral estimates
+
+        # The final multi-taper estimates are the average spectral estimates across all tapers
+        Direct_MT_est = np.mean(Direct_MT_est_tapers[0:N,:], axis=1, keepdims = True)
+    
+        return Direct_MT_est, Direct_w_est_tapers                            
     def calc_psd_welch(self, itype, window):
         """ 
         Calculate welch power spectrum.
