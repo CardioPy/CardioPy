@@ -1067,7 +1067,101 @@ class EKG:
         # The final multi-taper estimates are the average spectral estimates across all tapers
         Direct_MT_est = np.mean(Direct_MT_est_tapers[0:N,:], axis=1, keepdims = True)
     
-        return Direct_MT_est, Direct_w_est_tapers                            
+        return Direct_MT_est, Direct_w_est_tapers
+
+    def Confidence_Intervals_Bootstrapping(MT_est, w_est_tapers, CI, bootstrapping_repeats, fs, K):
+    
+        N = MT_est.shape[0] # Number of frequency bins
+        scaling_fac = (1/fs)*(K / N) # The scaling factor of the final estimates
+
+        no_of_tapers = w_est_tapers.shape[1] # The number of tapers used for multi-tapering
+
+        Denoised_MT_est_bootstrap = np.zeros((N,bootstrapping_repeats)) # Store bootstrapped MT estimates
+
+        #  Step 2 (Kim et al., 2018): Scale the Eigen coefficients by the power of the MT estimates
+        scaled_w_hat = w_est_tapers
+        scaled_w_hat[0,:] = scaled_w_hat[0,:]/np.sqrt(MT_est[0]/2)
+        for n in range(0,N-1):
+            S_fac = np.sqrt(MT_est[n+1]/2)
+            scaled_w_hat[2*n+1,:] = scaled_w_hat[2*n+1,:] / S_fac
+            scaled_w_hat[2*n+2,:] = scaled_w_hat[2*n+2,:] / S_fac    
+
+        # Step 3 (Kim et al., 2018): Standardize the concatanated Eigencoefficients to have zero mean and unit variance
+        for taper in range(0,no_of_tapers):
+            temp = scaled_w_hat[:,taper]
+            scaled_w_hat[:,taper] = [temp - np.mean(temp)]/np.sqrt(np.mean((temp - np.mean(temp))**2))
+
+        # Perform the bootstrapping
+        for i in range(0,bootstrapping_repeats):    
+            Denoised_MT_est_bootstrap_taper = np.zeros((N,no_of_tapers)) # Bootstrapped MT estimate for each taper
+            scaled_w_hat_bootstrap = np.zeros((2*N-1,no_of_tapers)) #. Bootstrapped Eigen coefficients        
+            for n in range(0,scaled_w_hat.shape[0]):
+                temp = scaled_w_hat[n,:]
+                bootstrap_order = np.random.randint(no_of_tapers, size=no_of_tapers) # Step 4 (Kim et al., 2018): bootstrapping with replacement
+                scaled_w_hat_bootstrap[n,:] = temp[bootstrap_order]
+                # Step 5 (Kim et al., 2018): Re-scale the bootstrapped eigen coefficients
+                if n == 0:
+                    scaled_w_hat_bootstrap[n,:] = scaled_w_hat_bootstrap[n,:]*np.sqrt(MT_est[0]/2)
+                else:
+                    scaled_w_hat_bootstrap[n,:] = scaled_w_hat_bootstrap[n,:]*np.sqrt(MT_est[(np.ceil(n/2)).astype(int)]/2)                
+            # Step 6 (Kim et al., 2018): Derive the bootstrapped Eigen spectra for each taper
+            for taper in range(0,no_of_tapers):
+                temp = scaled_w_hat_bootstrap[:,taper]
+                temp = temp.reshape((temp.shape[0],1))
+                final_eigen_spectra_bootstrap = temp@temp.T
+                Denoised_MT_est_bootstrap_taper[0,taper] = final_eigen_spectra_bootstrap[0,0]
+                for n in range(0,N-1):
+                    Denoised_MT_est_bootstrap_taper[n+1,taper] =  final_eigen_spectra_bootstrap[2*n+1,2*n+1]+final_eigen_spectra_bootstrap[2*n+2,2*n+2]    
+            # Derive the bootstrapped Multitaper Spectral Estimates
+            temp = scaling_fac*np.mean(np.absolute(Denoised_MT_est_bootstrap_taper), axis=1, keepdims = True)
+            Denoised_MT_est_bootstrap[:,i] = temp.reshape((temp.shape[0],))
+
+        # Specify the lower and upper percentiles based on the desired Confidence Intervals
+        lower_percentile = (np.floor(((1-CI)/2)*bootstrapping_repeats)).astype(int)
+        upper_percentile = (np.ceil(((1+CI)/2)*bootstrapping_repeats)).astype(int)
+        Upper_confidence_PSD = np.zeros((N,1))
+        Lower_confidence_PSD = np.zeros((N,1))
+
+        # Derive the confidence bounds using the upper and lower percentiles
+        for n in range(0,N):
+            temp = np.sort(Denoised_MT_est_bootstrap[n,:])
+            Lower_confidence_PSD[n] = temp[lower_percentile]
+            Upper_confidence_PSD[n] = temp[upper_percentile]
+
+        return Lower_confidence_PSD.reshape((N,)), Upper_confidence_PSD.reshape((N,))
+
+    def Confidence_Intervals_Chi_squared(MT_est, CI, no_of_tapers):
+    
+        # The Degrees of freedom of the Chi-squared distribution equals to twice the number of tapers used in multi-tapering
+        Degree_of_freedom = 2*no_of_tapers
+        
+        Lower_confidence_PSD = (Degree_of_freedom / chi2.ppf((1+CI)/2, df=Degree_of_freedom)) * abs(MT_est);
+        Upper_confidence_PSD = (Degree_of_freedom / chi2.ppf((1-CI)/2, df=Degree_of_freedom)) * abs(MT_est);
+
+        return Lower_confidence_PSD.reshape((N,)), Upper_confidence_PSD.reshape((N,)) 
+        
+    def plot_estimates(MT_PSD_est, Lower_confidence_PSD, Upper_confidence_PSD, fs):
+    
+        N = MT_PSD_est.shape[0]
+        freq_vector = np.arange(0.0, 0.5*fs, 0.5*fs/N)
+        y_axis_upper_bound = 20*10**4
+
+        fig, ax = plt.subplots(figsize=(15,3))
+        
+        freq_1 = np.max(freq_vector[freq_vector<= 0.04])
+        ax.plot([freq_1,freq_1],[0,y_axis_upper_bound], 'b--')
+        freq_2 = np.max(freq_vector[freq_vector<= 0.15])
+        ax.plot([freq_2,freq_2],[0,y_axis_upper_bound], 'b--')
+        freq_3 = np.max(freq_vector[freq_vector<= 0.40])
+        ax.plot([freq_3,freq_3],[0,y_axis_upper_bound], 'b--')
+
+        ax.plot(freq_vector, MT_PSD_est, color="black")
+        ax.fill_between(freq_vector, Lower_confidence_PSD, Upper_confidence_PSD, color='k', alpha=.4)
+        plt.xlabel("frequency ($Hz$)")
+        plt.ylabel("Power ($ms^2/Hz$)")
+        
+        plt.xlim([np.min(freq_vector), np.max(freq_vector)])
+        plt.ylim([0, y_axis_upper_bound])                     
     def calc_psd_welch(self, itype, window):
         """ 
         Calculate welch power spectrum.
