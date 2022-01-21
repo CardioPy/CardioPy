@@ -971,10 +971,11 @@ class EKG:
         self.ii_interp = f_interp(t_interp)
         self.metadata['analysis_info']['s_freq_interp'] = self.metadata['analysis_info']['s_freq']
 
-    def data_pre_processing(fs):
+    def data_pre_processing(self,fs):
         
         # remove the time intervals that are not valid
-        NN_intervals = self.nn[~np.isnan(NN_intervals)]
+        NN_intervals = self.nn
+        NN_intervals = NN_intervals[~np.isnan(NN_intervals)]
 
         spike_times = np.cumsum(NN_intervals)/1000
 
@@ -989,15 +990,15 @@ class EKG:
         # Zero centering the time series prior to multi-tapering
         NN_intervals_interpolated = NN_intervals_interpolated - np.mean(NN_intervals_interpolated)
         NN_intervals_interpolated = NN_intervals_interpolated.reshape((K,1))
-        return NN_intervals_interpolated
+        return NN_intervals_interpolated, K
     
-    def Denoised_MT_Spectral_Estimation(NN_intervals_interpolated, N, NW, no_of_tapers):
+    def Denoised_MT_Spectral_Estimation(self, NN_intervals_interpolated, N, NW, no_of_tapers, K):
         
         # Initializing the parameters
         iter_EM = 50 # Maximum EM iterations
         Q_initial_factor = 10**(5) # Initialization of Q
         sigma_observation = 1*10**(4) # Initialization of Observation noise variance
-        Sequences = scipy.signal.windows.dpss(K, NW, Kmax=no_of_tapers) # Generate the data tapers used for multitapering
+        Sequences = sp.signal.windows.dpss(K, NW, Kmax=no_of_tapers) # Generate the data tapers used for multitapering
 
         # constructing the inverse FFT matrix (A)
         A=np.zeros((K,2*N))
@@ -1046,7 +1047,7 @@ class EKG:
         
         return Denoised_MT_est, Denoised_w_est_tapers   
 
-    def Direct_MT_Spectral_Estimation(NN_intervals_interpolated, N, NW, no_of_tapers):
+    def Direct_MT_Spectral_Estimation(self, NN_intervals_interpolated, N, NW, no_of_tapers):
     
         # Initializing variables
         K = NN_intervals_interpolated.shape[0] # Observation duration in samples
@@ -1069,7 +1070,7 @@ class EKG:
     
         return Direct_MT_est, Direct_w_est_tapers
 
-    def Confidence_Intervals_Bootstrapping(MT_est, w_est_tapers, CI, bootstrapping_repeats, fs, K):
+    def Confidence_Intervals_Bootstrapping(self, MT_est, w_est_tapers, CI, bootstrapping_repeats, fs, K):
     
         N = MT_est.shape[0] # Number of frequency bins
         scaling_fac = (1/fs)*(K / N) # The scaling factor of the final estimates
@@ -1130,7 +1131,7 @@ class EKG:
 
         return Lower_confidence_PSD.reshape((N,)), Upper_confidence_PSD.reshape((N,))
 
-    def Confidence_Intervals_Chi_squared(MT_est, CI, no_of_tapers):
+    def Confidence_Intervals_Chi_squared(self, MT_est, CI, no_of_tapers):
     
         # The Degrees of freedom of the Chi-squared distribution equals to twice the number of tapers used in multi-tapering
         Degree_of_freedom = 2*no_of_tapers
@@ -1139,8 +1140,8 @@ class EKG:
         Upper_confidence_PSD = (Degree_of_freedom / chi2.ppf((1-CI)/2, df=Degree_of_freedom)) * abs(MT_est);
 
         return Lower_confidence_PSD.reshape((N,)), Upper_confidence_PSD.reshape((N,)) 
-        
-    def plot_estimates(MT_PSD_est, Lower_confidence_PSD, Upper_confidence_PSD, fs):
+
+    def plot_estimates(self, MT_PSD_est, Lower_confidence_PSD, Upper_confidence_PSD, fs):
     
         N = MT_PSD_est.shape[0]
         freq_vector = np.arange(0.0, 0.5*fs, 0.5*fs/N)
@@ -1232,6 +1233,48 @@ class EKG:
                                             bandwidth=bandwidth, normalization='full', verbose=0)
         self.psd_mt = {'freqs': freqs, 'pwr': pwr}
         self.metadata['analysis_info']['psd_method'] = 'multitaper'
+
+    def power_spectrum_prep(self):
+        # Main task 1. Load data into the workspace and specify the parameters - pre processing
+
+        # Specify the desired sampling frequency of the time series in Hz
+        fs = 4;
+
+        # Extract the interpolated and zero centered NN time series
+        NN_intervals_interpolated, K = self.data_pre_processing(fs)
+        K = NN_intervals_interpolated.shape[0]
+
+        # Set the parameters required for Spectral analysis - multi tapering
+        N = 512        # Number of frequency bins considered in the frequency interval [0,fs/2). This determines the frequency spacing.  
+        NW = 2             # time half-bandwidth product of Multitapering
+        no_of_tapers = 3   # the number of tapers considered for Multitapering
+
+        # Set the parameters required for Confidence Intervals
+        CI = 0.95  # Specify the Required Confidence levels
+        bootstrapping_repeats = 5000 # Specify the number of bootstrap samples
+
+        scaling_fac = (1/fs)*(K / N) # Final scaling factor of the PSD estimates
+
+        multi_tapering_spectral_resolution = NW*fs/K
+
+        Denoised_MT_est, Denoised_w_est_tapers = self.Denoised_MT_Spectral_Estimation(NN_intervals_interpolated, N, NW, no_of_tapers,K)
+
+        # Multiply by the required scaling factors to get the final spectral estimates
+        Denoised_MT_est_final = scaling_fac*Denoised_MT_est;                        
+
+        freq_vector = np.arange(0.0, 0.5*fs, 0.5*fs/N)
+        y_axis_upper_bound = 20*10**4
+
+        plt.figure(figsize=(15,3))
+        plt.plot(freq_vector, Denoised_MT_est_final, color="black")
+        plt.title('Denoised Multitaper Spectral Estimate',fontdict = {'fontsize' : 16})
+        plt.xlabel("frequency ($Hz$)")
+        plt.ylabel("Power ($ms^2/Hz$)")
+        plt.xlim([np.min(freq_vector), np.max(freq_vector)])
+        plt.ylim([0, y_axis_upper_bound])
+        plt.show()
+
+
 
     def calc_fbands(self, method):
         """
