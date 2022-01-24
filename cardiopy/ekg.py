@@ -27,6 +27,7 @@ from numpy import linspace, diff, zeros_like, arange, array
 from mne.time_frequency import psd_array_multitaper
 from pandas.plotting import register_matplotlib_converters
 from scipy.signal import welch
+from scipy.stats.distributions import chi2
 
 class EKG:
     """
@@ -972,7 +973,21 @@ class EKG:
         self.metadata['analysis_info']['s_freq_interp'] = self.metadata['analysis_info']['s_freq']
 
     def data_pre_processing(self,fs):
-        
+        """
+        Loading data to the workspace and perform pre-processing: Linearly interpolate the NN time series and zero center.
+
+        Parameters
+        ----------
+        fs : int
+            desired sampling frequency of time series in Hz
+
+        Returns
+        -------
+        NN_intervals_interpolated : numpy array
+            Interpolated and zero centered NN time series
+        K : int 
+            Length of NN_intervals_interpolayed
+        """
         # remove the time intervals that are not valid
         NN_intervals = self.nn
         NN_intervals = NN_intervals[~np.isnan(NN_intervals)]
@@ -1054,7 +1069,7 @@ class EKG:
         Fourier_est = np.zeros((2*N, no_of_tapers),dtype=complex) # Eigen Spectra
         Direct_MT_est_tapers = np.zeros((2*N,no_of_tapers)) # Classical Multi-taper spectral estimate
         Direct_w_est_tapers = np.zeros((2*N-1,no_of_tapers)) # The real and imaginery components of the Eigen-coefficients for each taper
-        dpss_seq = scipy.signal.windows.dpss(K, NW, Kmax=no_of_tapers) # Generate the data tapers used for multitapering
+        dpss_seq = sp.signal.windows.dpss(K, NW, Kmax=no_of_tapers) # Generate the data tapers used for multitapering
 
         # Computing the Eigen-coefficients and the Eigenspectra for each taper
         for taper in range(0,no_of_tapers):
@@ -1070,7 +1085,7 @@ class EKG:
     
         return Direct_MT_est, Direct_w_est_tapers
 
-    def Confidence_Intervals_Bootstrapping(self, MT_est, w_est_tapers, CI, bootstrapping_repeats, fs, K):
+    def Confidence_Intervals_Bootstrapping(self, MT_est, w_est_tapers, CI, bootstrapping_repeats, fs, K, N):
     
         N = MT_est.shape[0] # Number of frequency bins
         scaling_fac = (1/fs)*(K / N) # The scaling factor of the final estimates
@@ -1131,7 +1146,7 @@ class EKG:
 
         return Lower_confidence_PSD.reshape((N,)), Upper_confidence_PSD.reshape((N,))
 
-    def Confidence_Intervals_Chi_squared(self, MT_est, CI, no_of_tapers):
+    def Confidence_Intervals_Chi_squared(self, MT_est, CI, no_of_tapers, N):
     
         # The Degrees of freedom of the Chi-squared distribution equals to twice the number of tapers used in multi-tapering
         Degree_of_freedom = 2*no_of_tapers
@@ -1162,7 +1177,8 @@ class EKG:
         plt.ylabel("Power ($ms^2/Hz$)")
         
         plt.xlim([np.min(freq_vector), np.max(freq_vector)])
-        plt.ylim([0, y_axis_upper_bound])                     
+        #plt.ylim([0, y_axis_upper_bound])      
+        return fig               
     def calc_psd_welch(self, itype, window):
         """ 
         Calculate welch power spectrum.
@@ -1234,7 +1250,7 @@ class EKG:
         self.psd_mt = {'freqs': freqs, 'pwr': pwr}
         self.metadata['analysis_info']['psd_method'] = 'multitaper'
 
-    def power_spectrum_prep(self):
+    def power_spectrum_prep(self, denoised = True, confidence = 'bootstrapping'):
         # Main task 1. Load data into the workspace and specify the parameters - pre processing
 
         # Specify the desired sampling frequency of the time series in Hz
@@ -1257,24 +1273,52 @@ class EKG:
 
         multi_tapering_spectral_resolution = NW*fs/K
 
-        Denoised_MT_est, Denoised_w_est_tapers = self.Denoised_MT_Spectral_Estimation(NN_intervals_interpolated, N, NW, no_of_tapers,K)
+        if denoised==True:
+            Denoised_MT_est, Denoised_w_est_tapers = self.Denoised_MT_Spectral_Estimation(NN_intervals_interpolated, N, NW, no_of_tapers,K)
 
-        # Multiply by the required scaling factors to get the final spectral estimates
-        Denoised_MT_est_final = scaling_fac*Denoised_MT_est;                        
+            # Multiply by the required scaling factors to get the final spectral estimates
+            Denoised_MT_est_final = scaling_fac*Denoised_MT_est;                        
 
-        freq_vector = np.arange(0.0, 0.5*fs, 0.5*fs/N)
-        y_axis_upper_bound = 20*10**4
+            freq_vector = np.arange(0.0, 0.5*fs, 0.5*fs/N)
+            y_axis_upper_bound = 20*10**4
 
-        plt.figure(figsize=(15,3))
-        plt.plot(freq_vector, Denoised_MT_est_final, color="black")
-        plt.title('Denoised Multitaper Spectral Estimate',fontdict = {'fontsize' : 16})
-        plt.xlabel("frequency ($Hz$)")
-        plt.ylabel("Power ($ms^2/Hz$)")
-        plt.xlim([np.min(freq_vector), np.max(freq_vector)])
-        plt.ylim([0, y_axis_upper_bound])
-        plt.show()
+     #       plt.figure(figsize=(15,3))
+   #         plt.plot(freq_vector, Denoised_MT_est_final, color="black")
+  #          plt.title('Denoised Multitaper Spectral Estimate',fontdict = {'fontsize' : 16})
+   #         plt.xlabel("frequency ($Hz$)")
+    #        plt.ylabel("Power ($ms^2/Hz$)")
+     #       plt.xlim([np.min(freq_vector), np.max(freq_vector)])
+      #      plt.ylim([0, y_axis_upper_bound])
+ #           plt.show()
 
+            if confidence == "bootstrapping":
+                Denoised_MT_est_Lower_confidence_bootstrap, Denoised_MT_est_Upper_confidence_bootstrap = self.Confidence_Intervals_Bootstrapping(Denoised_MT_est, Denoised_w_est_tapers, CI, bootstrapping_repeats, fs, K, N)
 
+                fig = self.plot_estimates(Denoised_MT_est_final, Denoised_MT_est_Lower_confidence_bootstrap, Denoised_MT_est_Upper_confidence_bootstrap, fs)
+                plt.title('Denoised Multitaper Spectral Estimate: with %d%% Confidence Intervals - Bootstrapping'% (CI*100),fontdict = {'fontsize' : 16}) 
+                plt.show()
+            if confidence == "chi sq": 
+                Denoised_MT_est_Lower_confidence_Chi_squared, Denoised_MT_est_Upper_confidence_Chi_squared = self.Confidence_Intervals_Chi_squared(Denoised_MT_est_final, CI, no_of_tapers, N)
+
+                fig = self.plot_estimates(Denoised_MT_est_final, Denoised_MT_est_Lower_confidence_Chi_squared, Denoised_MT_est_Upper_confidence_Chi_squared, fs)
+                plt.title('Denoised Multitaper Spectral Estimate: with %d%% Confidence Intervals - Chi - squared test'% (CI*100),fontdict = {'fontsize' : 16})
+                plt.show()
+        if denoised==False:
+            Direct_MT_est, Direct_w_est_tapers = self.Direct_MT_Spectral_Estimation(NN_intervals_interpolated, N, NW, no_of_tapers)
+    
+            # Multiply by the required scaling factors to get the final spectral estimates
+            Direct_MT_est_final = scaling_fac*Direct_MT_est
+            if confidence == 'bootstrapping':
+                Direct_MT_est_Lower_confidence_bootstrap, Direct_MT_est_Upper_confidence_bootstrap = self.Confidence_Intervals_Bootstrapping(Direct_MT_est, Direct_w_est_tapers, CI, bootstrapping_repeats, fs, K, N)
+                fig = self.plot_estimates(Direct_MT_est_final, Direct_MT_est_Lower_confidence_bootstrap, Direct_MT_est_Upper_confidence_bootstrap, fs)
+                plt.title('Direct Multitaper Spectral Estimate: with %d%% Confidence Intervals - Bootstrapping'% (CI*100),fontdict = {'fontsize' : 16})
+                plt.show()
+            if confidence == 'Chi sq':
+                Direct_MT_est_Lower_confidence_Chi_squared, Direct_MT_est_Upper_confidence_Chi_squared = self.Confidence_Intervals_Chi_squared(Direct_MT_est_final, CI, no_of_tapers, N)
+                fig - self.plot_estimates(Direct_MT_est_final, Direct_MT_est_Lower_confidence_Chi_squared, Direct_MT_est_Upper_confidence_Chi_squared, fs)
+                plt.title('Direct Multitaper Spectral Estimate: with %d%% Confidence Intervals - Chi - squared test'% (CI*100),fontdict = {'fontsize' : 16})
+                plt.show()
+                    
 
     def calc_fbands(self, method):
         """
