@@ -370,7 +370,6 @@ class EKG:
         # refresh nn values
         self.nn = self.rr
 
-
     def undo_rm_peak(self, time):
         """
         Manually add back incorrectly removed peaks from EKG.rm_peak method.
@@ -670,7 +669,6 @@ class EKG:
                 self.rpeaks_df['ibi_ms'] = ibi
                 print('R peaks dataframe updated.\nDone.')
 
-
     def calc_RR(self, smooth, mw_size, upshift, rms_align):
         """
         Set R peak detection threshold, detect R peaks and calculate R-R intervals.
@@ -868,8 +866,6 @@ class EKG:
 
         print('Done.')
 
-
-
     def calc_tstats(self, itype):
         """
         Calculate commonly used time domain HRV statistics.
@@ -1043,7 +1039,7 @@ class EKG:
         Q_initial_factor = 10**(5) # Initialization of Q
         sigma_observation = 1*10**(4) # Initialization of Observation noise variance
         Sequences = sp.signal.windows.dpss(K, NW, Kmax=no_of_tapers) # Generate the data tapers used for multitapering
-
+        self.metadata['analysis_info']['psd_method'] = 'denoised multitaper'
         # constructing the inverse FFT matrix (A)
         A=np.zeros((K,2*N))
         for k in range(0,K):
@@ -1089,6 +1085,9 @@ class EKG:
         # The final multi-taper estimates are the average spectral estimates across all tapers
         Denoised_MT_est = np.mean(np.absolute(Denoised_MT_est_tapers), axis=1, keepdims = True)
         
+        freq_vector = np.arange(0.0, 0.5*fs, 0.5*fs/N)
+        self.psd_mt = {'freqs': freq_vector, 'pwr': Denoised_MT_est}
+
         return Denoised_MT_est, Denoised_w_est_tapers   
 
     def Direct_MT_Spectral_Estimation(self, NN_intervals_interpolated, N, NW, no_of_tapers):
@@ -1128,7 +1127,7 @@ class EKG:
         Direct_MT_est_tapers = np.zeros((2*N,no_of_tapers)) # Classical Multi-taper spectral estimate
         Direct_w_est_tapers = np.zeros((2*N-1,no_of_tapers)) # The real and imaginery components of the Eigen-coefficients for each taper
         dpss_seq = sp.signal.windows.dpss(K, NW, Kmax=no_of_tapers) # Generate the data tapers used for multitapering
-
+        self.metadata['analysis_info']['psd_method'] = 'direct multitaper'
         # Computing the Eigen-coefficients and the Eigenspectra for each taper
         for taper in range(0,no_of_tapers):
             temp = NN_intervals_interpolated.T*dpss_seq[taper,:]
@@ -1141,6 +1140,9 @@ class EKG:
         # The final multi-taper estimates are the average spectral estimates across all tapers
         Direct_MT_est = np.mean(Direct_MT_est_tapers[0:N,:], axis=1, keepdims = True)
     
+        freq_vector = np.arange(0.0, 0.5*fs, 0.5*fs/N)
+        self.psd_mt = {'freqs': freq_vector, 'pwr': Direct_MT_est}
+
         return Direct_MT_est, Direct_w_est_tapers
 
     def Confidence_Intervals_Bootstrapping(self, MT_est, w_est_tapers, CI, bootstrapping_repeats, fs, K, N):
@@ -1322,8 +1324,9 @@ class EKG:
         ax.fill_between(freq_vector, Lower_confidence_PSD, Upper_confidence_PSD, color='k', alpha=.4)
         plt.xlabel("frequency ($Hz$)")
         plt.ylabel("Power ($ms^2/Hz$)")
-        
-        plt.xlim([np.min(freq_vector), np.max(freq_vector)])
+        ax.set_xlim(0, 0.4)
+        plt.subplots_adjust(bottom=0.15)
+       # plt.xlim([np.min(freq_vector), np.max(freq_vector)])
         #plt.ylim([0, y_axis_upper_bound])      
         return fig               
 
@@ -1508,7 +1511,7 @@ class EKG:
         self.calc_fbands(method)
         print('Frequency measures stored in obj.freq_stats\n')
 
-    def hrv_stats(self, itype='nn', nn_file=None, method='mt', bandwidth=0.01, window='hamming'):
+    def hrv_stats(self, itype='nn', nn_file=None, method='denoised', bandwidth=0.01, window='hamming'):
         """
         Calculate both time and frequency domain HRV statistics on IBI object.
 
@@ -1519,7 +1522,7 @@ class EKG:
             'rr' is uncleaned data. 'nn' is normal intervals (cleaned)
         nn_file : str, optional
             Path to csv file containing cleaned nn values, if nn values were previously exported.
-        method : str, {'mt', 'welch'}
+        method : str, {'denoised', 'direct'}
             Method to use when calculating power spectrum. 
             'mt' is multitaper
         bandwidth : float, default 0.01
@@ -1885,7 +1888,7 @@ class EKG:
         # Main task 1. Load data into the workspace and specify the parameters - pre processing
 
         # Specify the desired sampling frequency of the time series in Hz
-        fs = 4;
+        fs = 4
 
         # Extract the interpolated and zero centered NN time series
         NN_intervals_interpolated, K = self.data_pre_processing(fs)
@@ -1899,7 +1902,6 @@ class EKG:
         # Set the parameters required for Confidence Intervals
         CI = 0.95  # Specify the Required Confidence levels
         bootstrapping_repeats = 5000 # Specify the number of bootstrap samples
-
         scaling_fac = (1/fs)*(K / N) # Final scaling factor of the PSD estimates
         freq_vector = np.arange(0.0, 0.5*fs, 0.5*fs/N)
         multi_tapering_spectral_resolution = NW*fs/K
@@ -1912,16 +1914,12 @@ class EKG:
 
             if confidence == "bootstrapping":
                 Denoised_MT_est_Lower_confidence_bootstrap, Denoised_MT_est_Upper_confidence_bootstrap = self.Confidence_Intervals_Bootstrapping(Denoised_MT_est, Denoised_w_est_tapers, CI, bootstrapping_repeats, fs, K, N)
-
                 fig = self.plot_estimates(Denoised_MT_est_final, Denoised_MT_est_Lower_confidence_bootstrap, Denoised_MT_est_Upper_confidence_bootstrap, fs)
                 plt.title('Denoised Multitaper Spectral Estimate: with %d%% Confidence Intervals - Bootstrapping'% (CI*100),fontdict = {'fontsize' : 16}) 
-                plt.show()
             if confidence == "chi sq": 
                 Denoised_MT_est_Lower_confidence_Chi_squared, Denoised_MT_est_Upper_confidence_Chi_squared = self.Confidence_Intervals_Chi_squared(Denoised_MT_est_final, CI, no_of_tapers, N)
-
                 fig = self.plot_estimates(Denoised_MT_est_final, Denoised_MT_est_Lower_confidence_Chi_squared, Denoised_MT_est_Upper_confidence_Chi_squared, fs)
                 plt.title('Denoised Multitaper Spectral Estimate: with %d%% Confidence Intervals - Chi - squared test'% (CI*100),fontdict = {'fontsize' : 16})
-                plt.show()
         if denoised==False:
             Direct_MT_est, Direct_w_est_tapers = self.Direct_MT_Spectral_Estimation(NN_intervals_interpolated, N, NW, no_of_tapers)
     
@@ -1931,11 +1929,10 @@ class EKG:
                 Direct_MT_est_Lower_confidence_bootstrap, Direct_MT_est_Upper_confidence_bootstrap = self.Confidence_Intervals_Bootstrapping(Direct_MT_est, Direct_w_est_tapers, CI, bootstrapping_repeats, fs, K, N)
                 fig = self.plot_estimates(Direct_MT_est_final, Direct_MT_est_Lower_confidence_bootstrap, Direct_MT_est_Upper_confidence_bootstrap, fs)
                 plt.title('Direct Multitaper Spectral Estimate: with %d%% Confidence Intervals - Bootstrapping'% (CI*100),fontdict = {'fontsize' : 16})
-                plt.show()
-            if confidence == 'Chi sq':
+            if confidence == 'chi sq':
                 Direct_MT_est_Lower_confidence_Chi_squared, Direct_MT_est_Upper_confidence_Chi_squared = self.Confidence_Intervals_Chi_squared(Direct_MT_est_final, CI, no_of_tapers, N)
-                plt.title('Direct Multitaper Spectral Estimate: with %d%% Confidence Intervals - Chi - squared test'% (CI*100),fontdict = {'fontsize' : 16})
                 fig = self.plot_estimates(Direct_MT_est_final, Direct_MT_est_Lower_confidence_Chi_squared, Direct_MT_est_Upper_confidence_Chi_squared, fs)
-                plt.show()
+                plt.title('Direct Multitaper Spectral Estimate: with %d%% Confidence Intervals - Chi - squared test'% (CI*100),fontdict = {'fontsize' : 16})   
         plt.xlabel("frequency ($Hz$)")
-        plt.xlim([np.min(freq_vector), np.max(freq_vector)])
+        plt.show()
+        # plt.xlim([np.min(freq_vector), np.max(freq_vector)])
