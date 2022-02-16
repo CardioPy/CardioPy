@@ -1029,6 +1029,12 @@ class EKG:
         denoised_w_est_tapers : np.ndarray
             The real and imaginary components of the denoised Eigen-coefficients for each taper.
 
+        Modifies
+        --------
+        self.psd_mt : Dict created containing power spectral density at respective frequencies.
+            'freqs' : np.ndarray
+            'pwr' : np.ndarray. Power spectral density in (V^2/Hz). 10log10 to convert to dB.
+
         See Also
         --------
         EKG.data_pre_processing : Load data to the workspace and perform pre-processing: Linearly interpolate the NN time series and zero center.
@@ -1115,6 +1121,13 @@ class EKG:
             The classical multitaper estimate of the Power Spectral Density
         direct_w_est_tapers : np.ndarray
             The real and imaginary components of the Eigen-coefficients for each taper.
+
+        Modifies
+        --------
+        self.psd_mt : Dict created containing power spectral density at respective frequencies.
+            'freqs' : np.ndarray
+            'pwr' : np.ndarray. Power spectral density in (V^2/Hz). 10log10 to convert to dB.
+
 
         See Also
         --------
@@ -1690,15 +1703,25 @@ class EKG:
                 json.dump(data, f, indent=4)   
         
         # save power spectra for later plotting
-        try: 
-            self.psd_mt
+        try:
+            self.psd_mt_denoised
         except AttributeError: 
             pass
         else:
-            savepsd = saveinfo + '_psd_mt.txt'
+            savepsd = saveinfo + '_psd_mt_denoised.txt'
             psdfile = os.path.join(savedir, savepsd)
-            psd_mt_df = pd.DataFrame(self.psd_mt)
+            psd_mt_df = pd.DataFrame(self.psd_mt_denoised)
             psd_mt_df.to_csv(psdfile, index=False)
+        try:
+            self.psd_mt_direct
+        except AttributeError: 
+            pass
+        else:
+            savepsd = saveinfo + '_psd_mt_direct.txt'
+            psdfile = os.path.join(savedir, savepsd)
+            psd_mt_df = pd.DataFrame(self.psd_mt_direct)
+            psd_mt_df.to_csv(psdfile, index=False)
+
         try:
             self.psd_welch
         except AttributeError: 
