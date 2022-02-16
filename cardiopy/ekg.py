@@ -1390,34 +1390,6 @@ class EKG:
         f, Pxx = welch(self.ii_interp, fs=4, window=window, scaling = 'density', nfft=nfft, 
                         nperseg=nperseg)
         self.psd_welch = {'freqs':f, 'pwr': Pxx, 'nfft': nfft, 'nperseg': nperseg}
-
-    def calc_psd_mt(self, bandwidth):
-        """
-        Calculate multitaper power spectrum.
-
-        Parameters
-        ----------
-        bandwidth: float
-            Frequency resolution of power spectrum (NW).
-
-        Modifies
-        --------
-        self.psd_mt : Dict created containing power spectral density at respective frequencies.
-            'freqs' : np.ndarray
-            'pwr' : np.ndarray. Power spectral density in (V^2/Hz). 10log10 to convert to dB.
-
-        See Also
-        --------
-        EKG.calc_psd_welch : Calculate welch power spectrum.
-        """
-        self.metadata['analysis_info']['psd_method'] = 'multitaper'
-        self.metadata['analysis_info']['psd_bandwidth'] = bandwidth
-        sf_interp = self.metadata['analysis_info']['s_freq_interp']
-
-        pwr, freqs = psd_array_multitaper(self.ii_interp, sf_interp, adaptive=True, 
-                                            bandwidth=bandwidth, normalization='full', verbose=0)
-        self.psd_mt = {'freqs': freqs, 'pwr': pwr}
-        self.metadata['analysis_info']['psd_method'] = 'multitaper'
  
     def calc_fbands(self, method):
         """
