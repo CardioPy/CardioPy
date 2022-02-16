@@ -1781,7 +1781,7 @@ class EKG:
                 # show microseconds for mouse-over
                 axs.format_xdata = lambda d: mdates.num2date(d).strftime('%H:%M:%S.%f')[:-3]
 
-    def plotPS(self, method='mt', dB=False, bands=True, save=True, savedir=None):
+    def plotPS(self, method='welch', dB=False, bands=True, save=True, savedir=None):
         """
         Plot power spectrum with method of choice and save if appropriate. 
 
@@ -1815,10 +1815,7 @@ class EKG:
             title = title + ' ' +  n.metadata['file_info']['epoch']
 
         # set data to plot
-        if method == 'mt':
-            psd = self.psd_mt
-        elif method == 'welch':
-            psd = self.psd_welch
+        psd = self.psd_welch
         
         # transform units
         if dB == True:
