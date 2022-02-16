@@ -1003,7 +1003,7 @@ class EKG:
         NN_intervals_interpolated = NN_intervals_interpolated.reshape((K,1))
         return NN_intervals_interpolated, K
     
-    def denoised_MT_Spectral_Estimation(self, NN_intervals_interpolated, N, NW, no_of_tapers, K):
+    def denoised_MT_Spectral_Estimation(self, NN_intervals_interpolated, N, NW, no_of_tapers, K, fs):
         """
         Peform expectation maximization to estimate the denoised Eigen coefficients and denoised Multitaper spectral estimates.
 
@@ -1019,6 +1019,8 @@ class EKG:
             Number of tapers considered for Multitapering
         K : int 
             Observation duration in samples
+        fs : int
+            Desired sampling frequency of the time series in Hz
 
         Returns
         -------
@@ -1086,11 +1088,11 @@ class EKG:
         denoised_MT_est = np.mean(np.absolute(denoised_MT_est_tapers), axis=1, keepdims = True)
         
         freq_vector = np.arange(0.0, 0.5*fs, 0.5*fs/N)
-        self.psd_mt = {'freqs': freq_vector, 'pwr': denoised_MT_est}
+        self.psd_mt_denoised = {'freqs': freq_vector, 'pwr': denoised_MT_est}
 
         return denoised_MT_est, denoised_w_est_tapers   
 
-    def direct_MT_Spectral_Estimation(self, NN_intervals_interpolated, N, NW, no_of_tapers):
+    def direct_MT_Spectral_Estimation(self, NN_intervals_interpolated, N, NW, no_of_tapers, fs):
         """
         Produce the classical multitaper estimate of the Power Spectral Density.
 
@@ -1104,6 +1106,8 @@ class EKG:
             Time half bandwidth of multitapering
         no_of_tapers : int
             Number of tapers considered for Multitapering
+        fs : int
+            Desired sampling frequency of the time series in Hz
 
         Returns
         -------
@@ -1141,7 +1145,7 @@ class EKG:
         direct_MT_est = np.mean(direct_MT_est_tapers[0:N,:], axis=1, keepdims = True)
     
         freq_vector = np.arange(0.0, 0.5*fs, 0.5*fs/N)
-        self.psd_mt = {'freqs': freq_vector, 'pwr': direct_MT_est}
+        self.psd_mt_direct = {'freqs': freq_vector, 'pwr': direct_MT_est}
 
         return direct_MT_est, direct_w_est_tapers
 
@@ -1417,11 +1421,13 @@ class EKG:
         Normalized units are normalized to total lf + hf power, according to Heathers et al. (2014)
         """
         if method is None:
-            method = input('Please enter PSD method (options: "welch", "mt"): ')
+            method = input('Please enter PSD method (options: "welch", "mt_direct", "mt_denoised"): ')
         if method == 'welch':
             psd = self.psd_welch
-        elif method == 'mt':
-            psd = self.psd_mt
+        if method == 'mt_direct':
+            psd = self.psd_mt_direct
+        elif method == 'mt_denoised':
+            psd = self.psd_mt_denoised
         
         # set frequency bands
         ulf = None
@@ -1513,7 +1519,7 @@ class EKG:
         self.calc_fbands(method)
         print('Frequency measures stored in obj.freq_stats\n')
 
-    def hrv_stats(self, itype='nn', nn_file=None, method='denoised', bandwidth=0.01, window='hamming'):
+    def hrv_stats(self, itype='nn', nn_file=None, method='mt_denoised', bandwidth=0.01, window='hamming'):
         """
         Calculate both time and frequency domain HRV statistics on IBI object.
 
@@ -1524,7 +1530,7 @@ class EKG:
             'rr' is uncleaned data. 'nn' is normal intervals (cleaned)
         nn_file : str, optional
             Path to csv file containing cleaned nn values, if nn values were previously exported.
-        method : str, {'denoised', 'direct'}
+        method : str, {'mt_denoised', 'mt_direct', 'welch'}
             Method to use when calculating power spectrum. 
             'mt' is multitaper
         bandwidth : float, default 0.01
@@ -1909,7 +1915,7 @@ class EKG:
         multi_tapering_spectral_resolution = NW*fs/K
 
         if denoised==True:
-            denoised_MT_est, denoised_w_est_tapers = self.denoised_MT_Spectral_Estimation(NN_intervals_interpolated, N, NW, no_of_tapers,K)
+            denoised_MT_est, denoised_w_est_tapers = self.denoised_MT_Spectral_Estimation(NN_intervals_interpolated, N, NW, no_of_tapers,K, fs)
 
             # Multiply by the required scaling factors to get the final spectral estimates
             denoised_MT_est_final = scaling_fac*denoised_MT_est;                        
@@ -1923,7 +1929,7 @@ class EKG:
                 fig = self.plot_estimates(denoised_MT_est_final, denoised_MT_est_Lower_confidence_Chi_squared, denoised_MT_est_Upper_confidence_Chi_squared, fs)
                 plt.title('denoised Multitaper Spectral Estimate: with %d%% Confidence Intervals - Chi - squared test'% (CI*100),fontdict = {'fontsize' : 16})
         if denoised==False:
-            direct_MT_est, direct_w_est_tapers = self.direct_MT_Spectral_Estimation(NN_intervals_interpolated, N, NW, no_of_tapers)
+            direct_MT_est, direct_w_est_tapers = self.direct_MT_Spectral_Estimation(NN_intervals_interpolated, N, NW, no_of_tapers, fs)
     
             # Multiply by the required scaling factors to get the final spectral estimates
             direct_MT_est_final = scaling_fac*direct_MT_est
