@@ -1565,7 +1565,6 @@ class EKG:
         ----------
         savedir : str
             Path to directory where spreadsheet will be saved. 
-
         spreadsheet : str
             Name of output file. 
 
@@ -1612,8 +1611,8 @@ class EKG:
         EKG.hrv_stats : Calculate both time and frequency domain HRV statistics on IBI object.
         EKG.calc_fstats : Calculate commonly used frequency domain HRV statistics.
         EKG.calc_tstats : Calculate commonly used time domain HRV statistics.
-        EKG.calc_psd_welch : Calculate welch power spectrum.
-        EKG.calc_psd_mt : Calculate multitaper power spectrum.
+        EKG.denoised_MT_Spectral_Estimation : Peform expectation maximization to estimate the denoised Eigen coefficients and denoised Multitaper spectral estimates.
+        EKG.direct_MT_Spectral_Estimation : Produce the classical multitaper estimate of the Power Spectral Density.
         """
         # set save directory
         if savedir is None:
@@ -1918,11 +1917,11 @@ class EKG:
             if confidence == "bootstrapping":
                 denoised_MT_est_Lower_confidence_bootstrap, denoised_MT_est_Upper_confidence_bootstrap = self.Confidence_Intervals_Bootstrapping(denoised_MT_est, denoised_w_est_tapers, CI, bootstrapping_repeats, fs, K, N)
                 fig = self.plot_estimates(denoised_MT_est_final, denoised_MT_est_Lower_confidence_bootstrap, denoised_MT_est_Upper_confidence_bootstrap, fs)
-                plt.title('denoised Multitaper Spectral Estimate: with %d%% Confidence Intervals - Bootstrapping'% (CI*100),fontdict = {'fontsize' : 16}) 
+                plt.title('Denoised Multitaper Spectral Estimate: with %d%% Confidence Intervals - Bootstrapping'% (CI*100),fontdict = {'fontsize' : 16}) 
             if confidence == "chi sq": 
                 denoised_MT_est_Lower_confidence_Chi_squared, denoised_MT_est_Upper_confidence_Chi_squared = self.Confidence_Intervals_Chi_squared(denoised_MT_est_final, CI, no_of_tapers, N)
                 fig = self.plot_estimates(denoised_MT_est_final, denoised_MT_est_Lower_confidence_Chi_squared, denoised_MT_est_Upper_confidence_Chi_squared, fs)
-                plt.title('denoised Multitaper Spectral Estimate: with %d%% Confidence Intervals - Chi - squared test'% (CI*100),fontdict = {'fontsize' : 16})
+                plt.title('Denoised Multitaper Spectral Estimate: with %d%% Confidence Intervals - Chi - squared test'% (CI*100),fontdict = {'fontsize' : 16})
         if denoised==False:
             direct_MT_est, direct_w_est_tapers = self.direct_MT_Spectral_Estimation(NN_intervals_interpolated, N, NW, no_of_tapers, fs)
     
