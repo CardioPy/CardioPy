@@ -1559,7 +1559,7 @@ class EKG:
         Append calculations as a row in master spreadsheet.
 
         Information exported includes arrays 'data', 'rpeaks', 'rr', 'rr_diff', 'rr_diffsq', 'rpeak_artifacts', 'rpeaks_added', 'ibi_artifacts',
-        'rpeaks_df', 'nn', 'nn_diff', 'nn_diffsq', 'rr_arts', 'ii_interp', 'psd_mt', 'psd_welch', 'psd_fband_vals' if calculated. 
+        'rpeaks_df', 'nn', 'nn_diff', 'nn_diffsq', 'rr_arts', 'ii_interp', 'psd_mt_direct', 'psd_mt_denoised', psd_welch', 'psd_fband_vals' if calculated. 
 
         Parameters
         ----------
@@ -1574,7 +1574,7 @@ class EKG:
         """
         # this is from before division to two classes. 'data' and 'rpeaks' arrays shouldn't exist in IBI object.
         arrays = ['data', 'rpeaks', 'rr', 'rr_diff', 'rr_diffsq', 'rpeak_artifacts', 'rpeaks_added', 'ibi_artifacts',
-        'rpeaks_df', 'nn', 'nn_diff', 'nn_diffsq', 'rr_arts', 'ii_interp', 'psd_mt', 'psd_welch', 'psd_fband_vals']
+        'rpeaks_df', 'nn', 'nn_diff', 'nn_diffsq', 'rr_arts', 'ii_interp', 'psd_mt_direct', 'psd_mt_denoised', 'psd_welch', 'psd_fband_vals']
         data = {k:v for k,v in vars(self).items() if k not in arrays}
         
         reform = {(level1_key, level2_key, level3_key): values
@@ -1636,7 +1636,7 @@ class EKG:
             print('Files will be saved to ' + savedir)
         
         # export everything that isn't a dataframe, series, or array    
-        arrays = ['data', 'rpeaks', 'rr', 'rr_diff', 'rr_diffsq', 'rpeak_artifacts', 'rpeaks_added', 'ibi_artifacts', 'rpeaks_df', 'nn', 'nn_diff', 'nn_diffsq', 'rr_arts', 'ii_interp', 'psd_mt', 'psd_fband_vals']
+        arrays = ['data', 'rpeaks', 'rr', 'rr_diff', 'rr_diffsq', 'rpeak_artifacts', 'rpeaks_added', 'ibi_artifacts', 'rpeaks_df', 'nn', 'nn_diff', 'nn_diffsq', 'rr_arts', 'ii_interp', 'psd_mt_direct', 'psd_mt_denoised', 'psd_fband_vals']
         data = {k:v for k,v in vars(self).items() if k not in arrays}
         
         # set savename info
