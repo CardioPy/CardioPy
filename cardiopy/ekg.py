@@ -1031,9 +1031,9 @@ class EKG:
 
         Modifies
         --------
-        self.psd_mt : Dict created containing power spectral density at respective frequencies.
-            'freqs' : np.ndarray
-            'pwr' : np.ndarray. Power spectral density in (V^2/Hz). 10log10 to convert to dB.
+        self.psd_mt_denoised : Dict created containing power spectral density at respective frequencies.
+                     'freqs' : np.ndarray
+                       'pwr' : np.ndarray. Power spectral density in (V^2/Hz). 10log10 to convert to dB.
 
         See Also
         --------
@@ -1091,8 +1091,7 @@ class EKG:
                 denoised_MT_est_tapers[n,taper] =  final_eigen_spectra[2*n-1,2*n-1] + final_eigen_spectra[2*n,2*n]
 
         # The final multi-taper estimates are the average spectral estimates across all tapers
-        denoised_MT_est = np.mean(np.absolute(denoised_MT_est_tapers), axis=1, keepdims = True)
-        
+        denoised_MT_est = np.squeeze(np.mean(np.absolute(denoised_MT_est_tapers), axis=1, keepdims = True))
         freq_vector = np.arange(0.0, 0.5*fs, 0.5*fs/N)
         self.psd_mt_denoised = {'freqs': freq_vector, 'pwr': denoised_MT_est}
 
@@ -1700,7 +1699,7 @@ class EKG:
         else:
             savepsd = saveinfo + '_psd_welch.txt'
             psdfile = os.path.join(savedir, savepsd)
-            psd_mt_df = pd.DataFrame(self.psd_mt)
+            psd_mt_df = pd.DataFrame(self.psd_welch)
             psd_mt_df.to_csv(psdfile, index=False)
 
     # plotting methods
