@@ -1070,13 +1070,13 @@ class EKG:
             tapered_NN_intervals = tapered_NN_intervals.reshape((K,1))
             w_est = np.zeros((2*N-1, 1))
             P_est = np.zeros((2*N-1, 2*N-1))
-            regularizer = (10**(-20))*np.eye((2*N-1))
+            regularizer = (10**(-10))*np.eye((2*N-1))
 
             # Expectation Maximization
             for r in range(0,iter_EM):
                 # Expectation step (E - step)
-                w_est = np.linalg.pinv(regularizer+A.T@A + np.linalg.pinv(regularizer+Q)*sigma_observation)@(A.T@tapered_NN_intervals) # Update the expected value of the denoised Eigen coefficients
-                P_est =  ((np.linalg.pinv(regularizer+A.T@A/(regularizer[0,0]+sigma_observation) + np.linalg.pinv(regularizer+Q)))) # Update the covariance of the denoised Eigen coefficients
+                w_est = np.linalg.inv(regularizer+A.T@A + np.linalg.inv(regularizer+Q)*sigma_observation)@(A.T@tapered_NN_intervals) # Update the expected value of the denoised Eigen coefficients
+                P_est =  ((np.linalg.inv(regularizer+A.T@A/(regularizer[0,0]+sigma_observation) + np.linalg.inv(regularizer+Q)))) # Update the covariance of the denoised Eigen coefficients
                 # Maximization (M - step)
                 Q = np.diag(np.diag(P_est + w_est@w_est.T)) # Update the Q matrix
                 sigma_observation = (tapered_NN_intervals.T@tapered_NN_intervals - 2*tapered_NN_intervals.T@A@w_est + np.trace((A.T)@(A)@(P_est + w_est@w_est.T)))/K # Update the observation noise variance
