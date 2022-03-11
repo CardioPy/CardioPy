@@ -125,6 +125,7 @@ class EKG:
             self.rms_smooth(sm_wn)
         else:
            self.metadata['analysis_info']['smooth'] = False
+           self.metadata['analysis_info']['rms_smooth_wn'] = 'N/A'
 
         # create empty series for false detections removed and missed peaks added
         self.rpeak_artifacts = pd.Series()
@@ -134,12 +135,15 @@ class EKG:
         # detect R peaks
         if detect_peaks == True:
             if pan_tompkins == True:
+                self.metadata['analysis_info']['mw_size'] = 'N/A'
+                self.metadata['analysis_info']['upshift'] = 'N/A'
+                self.metadata['analysis_info']['rms_align'] = 'N/A'
                 self.pan_tompkins_detector()
             # detect R peaks & calculate inter-beat intevals
             else: 
                 self.calc_RR(smooth, mw_size, upshift, rms_align)
                 self.metadata['analysis_info']['pan_tompkins'] = False
-        
+
         # initialize the nn object
         self.nn = self.rr
 
