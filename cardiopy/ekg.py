@@ -1785,13 +1785,13 @@ class EKG:
                 # show microseconds for mouse-over
                 axs.format_xdata = lambda d: mdates.num2date(d).strftime('%H:%M:%S.%f')[:-3]
 
-    def plotPS(self, method='welch', dB=False, bands=True, save=True, savedir=None):
+    def generate_welch(self, method='welch', dB=False, bands=True, save=True, savedir=None):
         """
         Plot power spectrum with method of choice and save if appropriate. 
 
         Parameters
         ----------
-        method : str, {'mt', 'welch'}
+        method : str, {'welch', 'mt'}
             Method by which power spectrum is to be calculated.
             'mt' is multitaper.
         dB : bool, default False
