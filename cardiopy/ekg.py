@@ -56,7 +56,7 @@ class EKG:
         Raw EKG value (mV) and corresponding interbeat interval leading up to the data point (ms) at each sampled point.
     """
 
-    def __init__(self, fname, fpath, polarity='positive', min_dur=True, epoched=True, smooth=False, sm_wn=30, mw_size=100, upshift=3.5, 
+    def __init__(self, fname, fpath, polarity='positive', min_dur=True, epoched=True, smooth=False, sm_wn=30, mw_size=90, upshift=3.5, 
         rms_align='right', detect_peaks=True, pan_tompkins=True):
         """
         Initialize raw EKG object.
