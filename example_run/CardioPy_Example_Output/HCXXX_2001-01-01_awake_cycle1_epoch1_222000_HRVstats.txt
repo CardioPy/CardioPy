@@ -2,7 +2,7 @@ metadata
 	file_info
 		in_num HCXXX
 		fname HCXXX_2001-01-01_awake_cycle1_epoch1_222000.csv
-		path C:/Users/JackieGottshall/Downloads\HCXXX_2001-01-01_awake_cycle1_epoch1_222000.csv
+		path /Users/natasharecoder/Documents/Jackie/CardioPy/example_run/HCXXX_2001-01-01_awake_cycle1_epoch1_222000.csv
 		rpeak_polarity negative
 		start_date 2001-01-01
 		sleep_stage awake
@@ -14,30 +14,27 @@ metadata
 		cycle_len_secs 299.996
 		NaNs(samples) 12500
 		NaNs(secs) 50.0
-		smooth True
-		rms_smooth_wn 20
-		mw_size 100
-		upshift 3.5
-		rms_align right
+		smooth False
+		pan_tompkins True
+		psd_method denoised multitaper
+		confidence_intervals bootstrapping
 		itype nn
-		artifacts_rmvd 2 false peaks (removed); 4 missed peaks (added); 4 ibis removed (from NaN data)
+		artifacts_rmvd 0 false peaks (removed); 0 missed peaks (added); 0 ibis removed (from NaN data)
 		s_freq_interp 250.0
-		psd_method multitaper
-		psd_bandwidth 0.01
 time_stats
 	linear
-		HR_avg 77.76931676414834
+		HR_avg 64.95936698032506
 		HR_max 84.65011286681715
-		HR_min 74.47864945382324
-		IBI_mean 771.5125
-		SDNN 22.744867484010623
-		RMSSD 9.543827298229605
-		pXX20 3.1446540880503147
-		pXX50 0.3144654088050315
+		HR_min 8.15749401783772
+		IBI_mean 923.6543209876543
+		SDNN 1934.4589929244685
+		RMSSD 2748.2042546701286
+		pXX20 38.50931677018634
+		pXX50 8.695652173913043
 freq_stats
 	totals
-		total_pwr 105398.9975220905
-		lf/hf 7.4165893525870406
+		total_pwr 9130354509.52316
+		lf/hf 30.92390042731221
 	ulf
 		freq_range None
 		pwr_ms2 None
@@ -47,21 +44,21 @@ freq_stats
 		pwr_nu None
 	vlf
 		freq_range (0.0, 0.04)
-		pwr_ms2 70333.95993071288
-		pwr_peak 0.00812572115775275
-		pwr_log 11.161010032717892
-		pwr_% 66.73114695988606
+		pwr_ms2 6536289706.2446375
+		pwr_peak 0.0078125
+		pwr_log 22.600635518222635
+		pwr_% 71.58856427126837
 	lf
 		freq_range (0.04, 0.15)
-		pwr_ms2 30898.856241375135
-		pwr_peak 0.040628605788763754
-		pwr_log 10.338474447358543
-		pwr_% 29.31608171595661
-		pwr_nu 88.11870274159655
+		pwr_ms2 2512807038.1384215
+		pwr_peak 0.046875
+		pwr_log 21.644666307099474
+		pwr_% 27.5214619050937
+		pwr_nu 96.86755068580386
 	hf
 		freq_range (0.15, 0.4)
-		pwr_ms2 4166.1813500024855
-		pwr_peak 0.3128402645734809
-		pwr_log 8.334755151839023
-		pwr_% 3.9527713241573275
-		pwr_nu 11.88129725840344
+		pwr_ms2 81257765.14010155
+		pwr_peak 0.16015625
+		pwr_log 18.213136945562603
+		pwr_% 0.8899738236379311
+		pwr_nu 3.1324493141961405
